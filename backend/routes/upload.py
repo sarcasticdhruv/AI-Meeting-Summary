@@ -3,15 +3,38 @@ from typing import Optional
 import tempfile
 import os
 from datetime import datetime
+import uuid
+import subprocess
 
 from services.llm_service import LLMService
-# from services.whisper_service import WhisperService
+from services.whisper_service import WhisperService
 from models.schemas import UploadResponse, TextUploadRequest
 from db.database import save_meeting
 
 router = APIRouter()
 llm_service = LLMService()
-# whisper_service = WhisperService()
+whisper_service = WhisperService()
+
+@router.get("/debug/ffmpeg")
+async def debug_ffmpeg():
+    """Debug endpoint to check FFmpeg availability"""
+    try:
+        result = subprocess.run(['ffmpeg', '-version'], 
+                              capture_output=True, 
+                              text=True, 
+                              timeout=5)
+        return {
+            "ffmpeg_available": result.returncode == 0,
+            "version_output": result.stdout[:200] if result.stdout else None,
+            "error_output": result.stderr[:200] if result.stderr else None,
+            "path_env": os.environ.get('PATH', '')[:500]
+        }
+    except Exception as e:
+        return {
+            "ffmpeg_available": False,
+            "error": str(e),
+            "path_env": os.environ.get('PATH', '')[:500]
+        }
 
 @router.post("/transcript", response_model=UploadResponse)
 async def upload_transcript(request: TextUploadRequest):
@@ -63,50 +86,67 @@ async def upload_transcript(request: TextUploadRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# @router.post("/audio", response_model=UploadResponse)
-# async def upload_audio(file: UploadFile = File(...)):
-#     """Upload and process audio file"""
-#     try:
-#         # Validate file type
-#         if not file.content_type.startswith('audio/'):
-#             raise HTTPException(status_code=400, detail="File must be an audio file")
+@router.post("/audio", response_model=UploadResponse)
+async def upload_audio(file: UploadFile = File(...)):
+    """Upload and process audio file"""
+    temp_file_path = None
+    try:
+        # Validate file type
+        if not file.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="File must be an audio file")
         
-#         # Save uploaded file temporarily
-#         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
-#             content = await file.read()
-#             temp_file.write(content)
-#             temp_file_path = temp_file.name
+        # Create tmp directory if it doesn't exist (use absolute path)
+        backend_dir = os.path.dirname(os.path.dirname(__file__))  # Go up from routes to backend
+        tmp_dir = os.path.join(backend_dir, "tmp")
+        os.makedirs(tmp_dir, exist_ok=True)
         
-#         try:
-#             # Transcribe audio
-#             transcript = await whisper_service.transcribe(temp_file_path)
+        # Generate unique filename
+        file_extension = os.path.splitext(file.filename)[1] if file.filename else ".wav"
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        temp_file_path = os.path.abspath(os.path.join(tmp_dir, unique_filename))
+        
+        # Save uploaded file
+        content = await file.read()
+        with open(temp_file_path, "wb") as temp_file:
+            temp_file.write(content)
+        
+        print(f"📁 File saved to: {temp_file_path}")
+        print(f"📊 File size: {os.path.getsize(temp_file_path)} bytes")
+        
+        # Transcribe audio (keep file until after transcription)
+        transcript = await whisper_service.transcribe(temp_file_path)
+        
+        # Process with LLM
+        analysis = await llm_service.analyze_transcript(transcript)
+        
+        # Save to database
+        meeting_id = await save_meeting({
+            "title": analysis.get("title", file.filename),
+            "transcript": transcript,
+            "summary": analysis.get("summary", ""),
+            "action_items": analysis.get("action_items", []),
+            "objections": analysis.get("objections", []),
+            "crm_notes": analysis.get("crm_notes", ""),
+            "created_at": datetime.now()
+        })
+        
+        return UploadResponse(
+            id=meeting_id,
+            status="processed",
+            summary=analysis.get("summary", ""),
+            action_items=analysis.get("action_items", []),
+            objections=analysis.get("objections", []),
+            crm_notes=analysis.get("crm_notes", "")
+        )
             
-#             # Process with LLM
-#             analysis = await llm_service.analyze_transcript(transcript)
-            
-#             # Save to database
-#             meeting_id = await save_meeting({
-#                 "title": analysis.get("title", file.filename),
-#                 "transcript": transcript,
-#                 "summary": analysis.get("summary", ""),
-#                 "action_items": analysis.get("action_items", []),
-#                 "objections": analysis.get("objections", []),
-#                 "crm_notes": analysis.get("crm_notes", ""),
-#                 "created_at": datetime.now()
-#             })
-            
-#             return UploadResponse(
-#                 id=meeting_id,
-#                 status="processed",
-#                 summary=analysis.get("summary", ""),
-#                 action_items=analysis.get("action_items", []),
-#                 objections=analysis.get("objections", []),
-#                 crm_notes=analysis.get("crm_notes", "")
-#             )
-            
-#         finally:
-#             # Clean up temp file
-#             os.unlink(temp_file_path)
-            
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        print(f"❌ Upload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up temp file only if it was created
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+                print(f"🗑️ Cleaned up temp file: {temp_file_path}")
+            except Exception as cleanup_error:
+                print(f"⚠️ Failed to cleanup temp file: {cleanup_error}")

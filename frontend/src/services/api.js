@@ -107,3 +107,13 @@ export const sendEmailSummary = async (meetingId, email) => {
     throw error.response?.data || error.message
   }
 }
+
+export const fetchRecentClients = async () => {
+  try {
+    const response = await api.get("/meetings/clients/recent")
+    return response.data.clients
+  } catch (error) {
+    console.error("Error fetching recent clients:", error)
+    throw error
+  }
+}

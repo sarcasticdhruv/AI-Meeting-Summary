@@ -3,15 +3,21 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 
 from models.schemas import MeetingResponse
-from db.database import get_meetings, get_meeting_by_id, delete_meeting_by_id
+from db.database import (
+    get_meetings,
+    get_meeting_by_id,
+    delete_meeting_by_id,
+    get_recent_clients,
+)
 
 router = APIRouter()
+
 
 @router.get("/", response_model=List[MeetingResponse])
 async def get_all_meetings(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    search: Optional[str] = None
+    search: Optional[str] = None,
 ):
     """Get all meetings with optional search and pagination"""
     try:
@@ -20,6 +26,7 @@ async def get_all_meetings(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/recent", response_model=List[MeetingResponse])
 async def get_recent_meetings(limit: int = Query(5, ge=1, le=20)):
     """Get recent meetings"""
@@ -27,13 +34,12 @@ async def get_recent_meetings(limit: int = Query(5, ge=1, le=20)):
         # Get meetings from last 30 days
         cutoff_date = datetime.now() - timedelta(days=30)
         meetings = await get_meetings(
-            limit=limit,
-            date_filter=cutoff_date,
-            order_by="created_at DESC"
+            limit=limit, date_filter=cutoff_date, order_by="created_at DESC"
         )
         return meetings
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/{meeting_id}", response_model=MeetingResponse)
 async def get_meeting(meeting_id: int):
@@ -46,6 +52,7 @@ async def get_meeting(meeting_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.delete("/{meeting_id}")
 async def delete_meeting(meeting_id: int):
     """Delete a meeting"""
@@ -54,5 +61,15 @@ async def delete_meeting(meeting_id: int):
         if not success:
             raise HTTPException(status_code=404, detail="Meeting not found")
         return {"message": "Meeting deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/clients/recent")
+async def get_recent_clients_endpoint(limit: int = Query(10, ge=1, le=20)):
+    """Get recent unique clients"""
+    try:
+        clients = await get_recent_clients(limit=limit)
+        return {"clients": clients}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

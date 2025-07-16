@@ -299,3 +299,36 @@ async def close_db_pool():
         await pool.close()
         pool = None
         print("✅ Database connection pool closed")
+
+async def get_recent_clients(limit: int = 10) -> List[Dict]:
+    """Get recent unique clients with their last meeting info"""
+    try:
+        await init_db_pool()
+        async with pool.acquire() as conn:
+            # Get unique clients with their most recent meeting
+            rows = await conn.fetch("""
+                SELECT DISTINCT ON (client) 
+                    client,
+                    title as last_meeting_title,
+                    created_at as last_meeting_date,
+                    COUNT(*) OVER (PARTITION BY client) as meeting_count
+                FROM meetings 
+                WHERE client IS NOT NULL AND client != ''
+                ORDER BY client, created_at DESC
+                LIMIT $1
+            """, limit)
+            
+            clients = []
+            for row in rows:
+                clients.append({
+                    "name": row["client"],
+                    "last_meeting_title": row["last_meeting_title"],
+                    "last_meeting_date": row["last_meeting_date"].isoformat() if row["last_meeting_date"] else None,
+                    "meeting_count": row["meeting_count"]
+                })
+            
+            print(f"✅ Returning {len(clients)} recent clients")
+            return clients
+    except Exception as e:
+        print(f"❌ Error fetching recent clients: {e}")
+        raise
