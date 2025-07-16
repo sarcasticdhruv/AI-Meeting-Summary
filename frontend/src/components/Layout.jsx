@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import {
   LayoutDashboard,
@@ -8,15 +8,17 @@ import {
   Puzzle,
   Upload,
   User,
-  Building2,
-  Globe,
-  Briefcase,
+  Circle,
+  CheckCircle,
 } from "lucide-react"
 import UploadModal from "./UploadModal"
+import { fetchActionItems } from "../services/api"
 
 const Layout = ({ children }) => {
   const location = useLocation()
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+  const [actionItems, setActionItems] = useState([])
+  const [isLoadingActions, setIsLoadingActions] = useState(true)
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -26,11 +28,23 @@ const Layout = ({ children }) => {
     { name: "Settings", href: "/settings", icon: SettingsIcon },
   ]
 
-  const recentClients = [
-    { name: "Tech Solutions Inc.", icon: Building2 },
-    { name: "Global Innovations", icon: Globe },
-    { name: "Acme Corp", icon: Briefcase },
-  ]
+  useEffect(() => {
+    const loadActionItems = async () => {
+      try {
+        const items = await fetchActionItems()
+        // Show only pending items, limit to 5 for sidebar
+        const pendingItems = items.filter(item => !item.completed).slice(0, 5)
+        setActionItems(pendingItems)
+      } catch (error) {
+        console.error("Failed to load action items:", error)
+        setActionItems([])
+      } finally {
+        setIsLoadingActions(false)
+      }
+    }
+
+    loadActionItems()
+  }, [])
 
   const isActive = (path) => location.pathname === path
 
@@ -96,20 +110,47 @@ const Layout = ({ children }) => {
             </nav>
 
             <div className="mt-8">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Recent Clients</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Action Items</h3>
+                <Link 
+                  to="/action-items" 
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  View All
+                </Link>
+              </div>
               <div className="space-y-2">
-                {recentClients.map((client) => {
-                  const Icon = client.icon
-                  return (
+                {isLoadingActions ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="px-3 py-2 animate-pulse">
+                        <div className="h-3 bg-gray-200 rounded w-full mb-1"></div>
+                        <div className="h-2 bg-gray-200 rounded w-2/3"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : actionItems.length > 0 ? (
+                  actionItems.map((item) => (
                     <div
-                      key={client.name}
-                      className="flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg cursor-pointer"
+                      key={item.id}
+                      className="flex items-start space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
                     >
-                      <Icon className="h-4 w-4" />
-                      <span>{client.name}</span>
+                      <Circle className="h-3 w-3 mt-1 flex-shrink-0 text-gray-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate text-xs">{item.task}</p>
+                        {item.meeting_title && (
+                          <p className="text-xs text-gray-500 truncate">
+                            From: {item.meeting_title}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  )
-                })}
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-xs text-gray-500">
+                    No pending action items
+                  </div>
+                )}
               </div>
             </div>
           </div>

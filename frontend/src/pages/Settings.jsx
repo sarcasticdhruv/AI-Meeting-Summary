@@ -25,7 +25,7 @@ const Settings = () => {
         <p className="text-gray-600 mt-1">Configure your Meeting Insights preferences.</p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      {/* <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center space-x-3 mb-6">
           <Key className="h-5 w-5 text-gray-600" />
           <h2 className="text-lg font-semibold text-gray-900">API Configuration</h2>
@@ -42,8 +42,8 @@ const Settings = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
 
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center space-x-3 mb-6">

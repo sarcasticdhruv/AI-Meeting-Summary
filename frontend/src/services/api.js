@@ -10,23 +10,49 @@ const api = axios.create({
 });
 
 // ✅ This function handles uploading a transcript as plain text
-export const uploadTranscript = async (data) => {
+export const uploadTranscript = async (data, onProgress = null) => {
   try {
     const endpoint = data.type === "text" ? "/upload/transcript" : "/upload/audio";
     let payload;
-    let config = {};
+    let config = {
+      timeout: 300000, // 5 minute timeout for large files
+    };
     
     if (data.type === "text") {
       payload = { content: data.content };
     } else {
       payload = data.content; // FormData for file uploads
       config.headers = { "Content-Type": "multipart/form-data" };
+      
+      // Add progress tracking for file uploads
+      if (onProgress) {
+        config.onUploadProgress = (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(percentCompleted);
+        };
+      }
     }
     
     const response = await api.post(endpoint, payload, config);
     return response.data;
   } catch (error) {
     console.error("Upload error:", error);
+    
+    // Enhanced error messages
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Upload timeout - file might be too large');
+    }
+    
+    if (error.response?.status === 413) {
+      throw new Error('File too large - please use a smaller file');
+    }
+    
+    if (error.response?.status === 415) {
+      throw new Error('Unsupported file type');
+    }
+    
     throw error.response?.data || error.message;
   }
 }
