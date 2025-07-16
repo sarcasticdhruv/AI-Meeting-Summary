@@ -17,20 +17,24 @@ class WhisperService:
     
     def _setup_ffmpeg_path(self):
         """Setup FFmpeg path in environment"""
+        local_ffmpeg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../bin"))
+        os.environ["PATH"] = f"{local_ffmpeg_path}{os.pathsep}{os.environ.get('PATH', '')}"
+        print(f"✅ Local FFmpeg path added to PATH: {local_ffmpeg_path}")
+
         # Common FFmpeg installation paths on Windows
-        possible_paths = [
-            r'C:\ffmpeg\bin',
-            r'C:\Program Files\ffmpeg\bin',
-            r'C:\Program Files\ffmpeg-master-latest-win64-gpl-shared\bin',
-        ]
+        # possible_paths = [
+        #     r'C:\ffmpeg\bin',
+        #     r'C:\Program Files\ffmpeg\bin',
+        #     r'C:\Program Files\ffmpeg-master-latest-win64-gpl-shared\bin',
+        # ]
         
-        current_path = os.environ.get('PATH', '')
+        # current_path = os.environ.get('PATH', '')
         
-        for path in possible_paths:
-            if os.path.exists(path) and path not in current_path:
-                os.environ['PATH'] = f"{path};{current_path}"
-                print(f"✅ Added FFmpeg path to environment: {path}")
-                break
+        # for path in possible_paths:
+        #     if os.path.exists(path) and path not in current_path:
+        #         os.environ['PATH'] = f"{path};{current_path}"
+        #         print(f"✅ Added FFmpeg path to environment: {path}")
+        #         break
     
     def _verify_ffmpeg(self):
         """Verify that FFmpeg is available"""
