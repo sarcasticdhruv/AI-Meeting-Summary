@@ -28,7 +28,14 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8000", "http://localhost:4173"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://localhost:8000", 
+        "http://localhost:4173",
+        "https://ai-meeting-frontend.onrender.com",  # Update with your actual URL
+        "https://*.onrender.com",  # Allow all Render domains
+        "https://ai-meeting-frontend-xxxx.onrender.com"  # Your specific frontend URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,8 +61,8 @@ async def health_check():
 
 if __name__ == "__main__":
     uvicorn.run(
-        "app.main:app",
+        "main:app",
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8000)),
-        reload=True
+        reload=False  # Disable reload in production
     )

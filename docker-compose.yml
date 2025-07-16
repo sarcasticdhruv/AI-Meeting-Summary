@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=8000
+    volumes:
+      - ./backend/tmp:/app/tmp
+    restart: unless-stopped
+
+  # Frontend is deployed separately as a static site on Render
+  # No Docker container needed for frontend

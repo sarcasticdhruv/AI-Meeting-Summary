@@ -1,0 +1,7 @@
+version: 1
+build:
+  commands:
+    - echo "Building backend..."
+    - cd backend && pip install -r requirements.txt
+start:
+  command: cd backend && python main.py
