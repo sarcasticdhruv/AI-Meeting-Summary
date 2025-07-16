@@ -11,6 +11,9 @@
 *.sqlite3
 meetings.db
 
+# Backend binaries and executables
+backend/bin/
+
 # Python
 __pycache__/
 *.py[cod]
