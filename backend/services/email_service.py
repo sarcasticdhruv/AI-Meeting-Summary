@@ -7,10 +7,11 @@ import asyncio
 
 class EmailService:
     def __init__(self):
-        self.smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-        self.smtp_port = int(os.getenv("SMTP_PORT", 587))
-        self.smtp_user = os.getenv("SMTP_USER")
-        self.smtp_password = os.getenv("SMTP_PASSWORD")
+        # Brevo SMTP settings
+        self.smtp_host = "smtp-relay.brevo.com"
+        self.smtp_port = 587
+        self.smtp_user = "925e11001@smtp-brevo.com"
+        self.smtp_password = "tqWcKh9wAMzdD1B6"
     
     async def send_meeting_summary(self, meeting: Dict, recipient_email: str, include_transcript: bool = False) -> bool:
         """Send meeting summary via email"""

@@ -1,18 +1,78 @@
 import { useQuery } from "@tanstack/react-query"
 import { useParams, useNavigate } from "react-router-dom"
-import { Calendar, Users, Clock, ArrowLeft, Download, Mail } from "lucide-react"
+import { Calendar, Users, Clock, ArrowLeft, Download, Mail, ChevronDown } from "lucide-react"
 import { formatDate } from "../utils/dateUtils"
-import { fetchMeetingById } from "../services/api"
+import { fetchMeetingById, exportMeeting, sendEmailSummary } from "../services/api"
+import { useState, useEffect, useRef } from "react"
 
 const MeetingDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [isExporting, setIsExporting] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [isEmailing, setIsEmailing] = useState(false)
+  const exportMenuRef = useRef(null)
   
   const { data: meeting, isLoading, error } = useQuery({
     queryKey: ["meeting", id],
     queryFn: () => fetchMeetingById(id),
     enabled: !!id
   })
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  const handleExport = async (format) => {
+    try {
+      setIsExporting(true)
+      setShowExportMenu(false)
+      await exportMeeting(id, format)
+    } catch (error) {
+      console.error("Export failed:", error)
+      alert("Export failed. Please try again.")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleEmail = async () => {
+    const email = prompt("Enter email address to send meeting summary:")
+    
+    if (!email) {
+      return // User cancelled
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid email address.")
+      return
+    }
+
+    const includeTranscript = confirm("Include full transcript in the email?")
+    
+    try {
+      setIsEmailing(true)
+      await sendEmailSummary(id, email, includeTranscript)
+      alert("Email sent successfully!")
+    } catch (error) {
+      console.error("Email failed:", error)
+      alert("Failed to send email. Please try again.")
+    } finally {
+      setIsEmailing(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -98,13 +158,41 @@ const MeetingDetails = () => {
         
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 flex-shrink-0">
-          <button className="flex items-center justify-center px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 hover:shadow-medium">
-            <Download className="h-4 w-4 mr-2" />
-            <span>Export</span>
-          </button>
-          <button className="flex items-center justify-center px-4 py-2 text-sm bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:shadow-medium rounded-xl transition-all duration-200 transform hover:scale-105">
+          <div className="relative" ref={exportMenuRef}>
+            <button 
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={isExporting}
+              className="flex items-center justify-center w-full px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              <span>{isExporting ? "Exporting..." : "Export"}</span>
+              <ChevronDown className="h-4 w-4 ml-1" />
+            </button>
+            
+            {showExportMenu && (
+              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-10">
+                <button
+                  onClick={() => handleExport('json')}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 rounded-t-xl transition-colors"
+                >
+                  Export as JSON
+                </button>
+                <button
+                  onClick={() => handleExport('csv')}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 rounded-b-xl transition-colors"
+                >
+                  Export as CSV
+                </button>
+              </div>
+            )}
+          </div>
+          <button 
+            onClick={handleEmail}
+            disabled={isEmailing}
+            className="flex items-center justify-center px-4 py-2 text-sm bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:shadow-medium rounded-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Mail className="h-4 w-4 mr-2" />
-            <span>Email</span>
+            <span>{isEmailing ? "Sending..." : "Email"}</span>
           </button>
         </div>
       </div>
