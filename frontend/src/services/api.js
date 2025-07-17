@@ -161,8 +161,66 @@ export const exportMeeting = async (meetingId, format = "json") => {
     
     return true
   } catch (error) {
+    // If individual meeting export isn't available (404), try alternative approach
+    if (error.response?.status === 404) {
+      console.log("Individual meeting export not available, using alternative method")
+      // Fallback: Get meeting data and export locally
+      try {
+        const meeting = await fetchMeetingById(meetingId)
+        const dataStr = format === 'json' 
+          ? JSON.stringify(meeting, null, 2)
+          : convertMeetingToCSV(meeting)
+          
+        const blob = new Blob([dataStr], { 
+          type: format === 'json' ? 'application/json' : 'text/csv' 
+        })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `meeting_${meetingId}.${format}`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+        return true
+      } catch (fallbackError) {
+        console.error("Fallback export failed:", fallbackError)
+        throw new Error("Export failed. Please try again later.")
+      }
+    }
     throw error.response?.data || error.message
   }
+}
+
+// Helper function to convert meeting data to CSV
+const convertMeetingToCSV = (meeting) => {
+  const headers = ['Field', 'Value']
+  const rows = [
+    ['ID', meeting.id],
+    ['Title', meeting.title],
+    ['Summary', meeting.summary || ''],
+    ['Created At', meeting.created_at || ''],
+    ['Participants', meeting.participants || ''],
+    ['Duration', meeting.duration || ''],
+    ['CRM Notes', meeting.crm_notes || ''],
+  ]
+  
+  // Add action items
+  if (meeting.action_items && meeting.action_items.length > 0) {
+    meeting.action_items.forEach((item, index) => {
+      const actionItem = typeof item === 'string' ? item : item.task || ''
+      rows.push([`Action Item ${index + 1}`, actionItem])
+    })
+  }
+  
+  // Add transcript if available
+  if (meeting.transcript) {
+    rows.push(['Transcript', meeting.transcript])
+  }
+  
+  return [headers, ...rows]
+    .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
+    .join('\n')
 }
 
 export const sendEmailSummary = async (meetingId, email, includeTranscript = false) => {
