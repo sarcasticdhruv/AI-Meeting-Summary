@@ -58,7 +58,27 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    health_status = {
+        "status": "healthy", 
+        "timestamp": datetime.now().isoformat(),
+        "services": {}
+    }
+    
+    # Check Whisper service
+    try:
+        from routes.upload import whisper_service
+        health_status["services"]["whisper"] = "ready" if whisper_service.model else "loading"
+    except Exception as e:
+        health_status["services"]["whisper"] = f"error: {str(e)}"
+    
+    # Check database
+    try:
+        from db.database import pool
+        health_status["services"]["database"] = "ready" if pool else "not_connected"
+    except Exception as e:
+        health_status["services"]["database"] = f"error: {str(e)}"
+    
+    return health_status
 
 if __name__ == "__main__":
     # Memory optimization for 512MB limit
