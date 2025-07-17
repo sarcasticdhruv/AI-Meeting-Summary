@@ -8,21 +8,23 @@ import gc
 
 
 class WhisperService:
-    def __init__(self, model_name: str = "tiny"):
+    def __init__(self, model_name: str = "tiny.en"):
         # Set FFmpeg path if needed
         self._setup_ffmpeg_path()
         
-        # Use tiny model for memory efficiency on free tier
-        # faster-whisper is much more memory efficient than openai-whisper
-        if model_name not in ["tiny"]:
-            print(f"⚠️ Using 'tiny' model instead of '{model_name}' for memory efficiency")
-            model_name = "tiny"
+        # Use tiny.en model for maximum memory efficiency on free tier
+        # tiny.en is smaller than tiny and English-only
+        if model_name not in ["tiny.en"]:
+            print(f"⚠️ Using 'tiny.en' model instead of '{model_name}' for memory efficiency")
+            model_name = "tiny.en"
         
         print(f"🔧 Loading faster-whisper model: {model_name}")
         
         # Initialize model with error handling and memory optimization
         self.model = None
-        self._initialize_model(model_name)
+        # Don't load model in __init__ to save memory - load on demand
+        self.model_name = model_name
+        print(f"💾 Model will be loaded on first transcription request")
         
         self._verify_ffmpeg()
         
@@ -159,21 +161,32 @@ class WhisperService:
         
         # Lazy load model if not initialized
         if self.model is None:
-            print("🔄 Loading model at runtime...")
-            self._initialize_model("tiny")
-            if self.model is None:
-                raise Exception("Failed to load Whisper model")
+            print("🔄 Loading model on demand to save memory...")
+            try:
+                self.model = WhisperModel(
+                    self.model_name, 
+                    device="cpu",
+                    compute_type="int8",
+                    download_root="/tmp",
+                    local_files_only=False
+                )
+                print(f"✅ Model {self.model_name} loaded successfully")
+            except Exception as e:
+                print(f"❌ Failed to load model: {e}")
+                raise Exception(f"Failed to load Whisper model: {str(e)}")
         
         try:
             print(f"🔧 Starting faster-whisper transcription")
             
             # Use faster-whisper which is more memory efficient
+            # Optimized settings for speed on small files
             segments, info = self.model.transcribe(
                 audio_file_path,
-                beam_size=1,  # Reduce beam size for memory efficiency
+                beam_size=1,  # Reduce beam size for speed
                 language="en",  # Specify language to avoid detection overhead
-                vad_filter=True,  # Voice Activity Detection to reduce processing
-                vad_parameters=dict(min_silence_duration_ms=500)
+                condition_on_previous_text=False,  # Faster processing
+                vad_filter=False,  # Disable VAD for speed on short files
+                word_timestamps=False  # Disable word timestamps for speed
             )
             
             # Extract text from segments
@@ -181,11 +194,19 @@ class WhisperService:
             for segment in segments:
                 transcript_text += segment.text + " "
             
-            # Clean up and force garbage collection
+            # Aggressive cleanup and force garbage collection
             del segments, info
             gc.collect()
             
             print(f"✅ Faster-whisper transcription completed")
+            
+            # Optional: Unload model after transcription to free memory
+            # Comment out if you want to keep model loaded for subsequent requests
+            # print("🗑️ Unloading model to free memory...")
+            # del self.model
+            # self.model = None
+            # gc.collect()
+            
             return transcript_text.strip()
             
         except Exception as e:

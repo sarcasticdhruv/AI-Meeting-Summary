@@ -7,6 +7,7 @@ import uuid
 import subprocess
 import gc
 import asyncio
+import psutil  # For memory monitoring
 
 from services.llm_service import LLMService
 from services.whisper_service import WhisperService
@@ -142,16 +143,28 @@ async def upload_audio(file: UploadFile = File(...)):
         print(f"📁 File saved to: {temp_file_path}")
         print(f"📊 File size: {os.path.getsize(temp_file_path)} bytes")
         
+        # Monitor memory usage
+        try:
+            process = psutil.Process()
+            memory_mb = process.memory_info().rss / 1024 / 1024
+            print(f"💾 Memory usage before transcription: {memory_mb:.1f} MB")
+        except:
+            print("💾 Memory monitoring unavailable")
+        
+        # Force garbage collection before intensive processing
+        gc.collect()
+        
         # Add timeout and better error handling for transcription
         print("🎵 Starting audio transcription...")
         try:
+            # Shorter timeout for small files - 2 min file should transcribe in under 2 minutes
             transcript = await asyncio.wait_for(
                 whisper_service.transcribe(temp_file_path), 
-                timeout=300  # 5 minute timeout
+                timeout=180  # 3 minute timeout (should be plenty for 2 min audio)
             )
             print(f"✅ Transcription completed. Length: {len(transcript)} characters")
         except asyncio.TimeoutError:
-            raise HTTPException(status_code=408, detail="Transcription timeout - file may be too large")
+            raise HTTPException(status_code=408, detail="Transcription timeout - audio processing took too long")
         except Exception as transcription_error:
             print(f"❌ Transcription failed: {transcription_error}")
             raise HTTPException(status_code=500, detail=f"Transcription failed: {str(transcription_error)}")

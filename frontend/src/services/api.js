@@ -22,7 +22,7 @@ export const uploadTranscript = async (data, onProgress = null) => {
     const endpoint = data.type === "text" ? "/upload/transcript" : "/upload/audio";
     let payload;
     let config = {
-      timeout: 300000, // 5 minute timeout for large files
+      timeout: 600000, // 10 minute timeout for audio processing
     };
     
     if (data.type === "text") {
