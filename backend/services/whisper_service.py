@@ -236,12 +236,14 @@ class WhisperService:
             self.logger.dual_print("MODEL LOADING...")
             try:
                 model_start_time = time.time()
+                # Ultra-optimized model loading for Render deployment
                 self.model = WhisperModel(
                     self.model_name, 
                     device="cpu",
-                    compute_type="int8",
+                    compute_type="int8",  # Fastest compute type
                     download_root="/tmp",
-                    local_files_only=False
+                    local_files_only=False,
+                    num_workers=1,  # Single worker to avoid thread overhead
                 )
                 model_load_time = time.time() - model_start_time
                 self.logger.info(f"Model {self.model_name} loaded successfully in {model_load_time:.2f}s")
@@ -258,26 +260,51 @@ class WhisperService:
             
             transcription_start = time.time()
             
-            # Use faster-whisper which is more memory efficient
-            # Optimized settings for speed on small files
+            # Use faster-whisper which is more memory efficient  
+            # Ultra-optimized settings for speed over accuracy on Render
             segments, info = self.model.transcribe(
                 audio_file_path,
-                beam_size=1,  # Reduce beam size for speed
+                beam_size=1,  # Minimum beam size for maximum speed
                 language="en",  # Specify language to avoid detection overhead
                 condition_on_previous_text=False,  # Faster processing
-                vad_filter=False,  # Disable VAD for speed on short files
-                word_timestamps=False  # Disable word timestamps for speed
+                vad_filter=True,  # Enable VAD to skip silence - helps with speed
+                vad_threshold=0.5,  # Higher threshold to be more aggressive
+                min_silence_duration_ms=1000,  # Skip 1+ second silences
+                word_timestamps=False,  # Disable word timestamps for speed
+                without_timestamps=False,  # Keep segment timestamps but optimize
+                initial_prompt=None,  # No initial prompt for speed
+                suppress_blank=True,  # Skip blank segments
+                suppress_tokens=[-1],  # Suppress special tokens
+                temperature=0.0,  # Deterministic output for speed
+                compression_ratio_threshold=2.4,  # Default but explicit
+                logprob_threshold=-1.0,  # Default but explicit
+                no_speech_threshold=0.6  # Skip segments with low speech probability
             )
             
             self.logger.info(f"Transcription info: duration={info.duration:.2f}s, language={info.language}")
             self.logger.dual_print(f"Audio duration: {info.duration:.2f}s")
             
-            # Extract text from segments
+            # Extract text from segments with better progress tracking
             transcript_text = ""
             segment_count = 0
-            for segment in segments:
+            
+            # Convert segments generator to list for better progress tracking
+            self.logger.dual_print("Converting segments for processing...")
+            segment_list = list(segments)
+            total_segments = len(segment_list)
+            
+            self.logger.info(f"Total segments to process: {total_segments}")
+            self.logger.dual_print(f"PROCESSING {total_segments} segments...")
+            
+            for i, segment in enumerate(segment_list):
                 transcript_text += segment.text + " "
                 segment_count += 1
+                
+                # Log progress more frequently for debugging Render timeout
+                if segment_count % 3 == 0 or i == total_segments - 1:  # Every 3 segments or last
+                    progress_pct = (i + 1) / total_segments * 100
+                    elapsed = time.time() - transcription_start
+                    self.logger.dual_print(f"Progress: {i+1}/{total_segments} ({progress_pct:.1f}%) - {elapsed:.1f}s elapsed")
                 if segment_count % 10 == 0:  # Log progress every 10 segments
                     self.logger.dual_print(f"Processed {segment_count} segments...")
             

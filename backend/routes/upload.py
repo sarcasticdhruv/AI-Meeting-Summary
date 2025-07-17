@@ -216,11 +216,11 @@ async def upload_audio(file: UploadFile = File(...)):
         upload_logger.dual_print(f"[{request_id}] TRANSCRIPTION START")
         
         try:
-            # Shorter timeout for small files - 2 min file should transcribe in under 2 minutes
+            # Increase timeout for Render deployment - model loading + transcription
             transcription_start = time.time()
             transcript = await asyncio.wait_for(
                 whisper_service.transcribe(temp_file_path), 
-                timeout=180  # 3 minute timeout (should be plenty for 2 min audio)
+                timeout=300  # 5 minute timeout to account for model loading + processing
             )
             transcription_time = time.time() - transcription_start
             upload_logger.info(f"[{request_id}] Transcription completed in {transcription_time:.2f}s - Length: {len(transcript)} characters")
