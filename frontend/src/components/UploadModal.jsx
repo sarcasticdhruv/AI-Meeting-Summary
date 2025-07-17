@@ -185,29 +185,32 @@ const UploadModal = ({ isOpen, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg mx-4 transform transition-all duration-300 scale-100">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Upload className="h-6 w-6 text-blue-600" />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8 w-full max-w-sm sm:max-w-md lg:max-w-lg max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
+              <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Upload Meeting Content</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+              <span className="hidden sm:inline">Upload Meeting Content</span>
+              <span className="sm:hidden">Upload Content</span>
+            </h2>
           </div>
           <button 
             onClick={() => { onClose(); resetForm(); }}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5 sm:h-6 sm:w-6" />
           </button>
         </div>
 
         {/* Status Display */}
         {uploadStatus !== "idle" && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-xl">
-            <div className="flex items-center space-x-3 mb-2">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-xl">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-2">
               {getStatusIcon()}
-              <span className="font-medium text-gray-900">{getStatusText()}</span>
+              <span className="font-medium text-gray-900 text-sm sm:text-base">{getStatusText()}</span>
             </div>
             
             {(uploadStatus === "uploading" || uploadStatus === "processing") && (
@@ -218,7 +221,7 @@ const UploadModal = ({ isOpen, onClose }) => {
                     style={{ width: `${uploadProgress}%` }}
                   ></div>
                 </div>
-                <div className="flex justify-between text-sm text-gray-600">
+                <div className="flex justify-between text-xs sm:text-sm text-gray-600">
                   <span>{uploadProgress.toFixed(0)}% complete</span>
                   <span>Time: {formatTime(elapsedTime)}</span>
                 </div>
@@ -229,22 +232,22 @@ const UploadModal = ({ isOpen, onClose }) => {
 
         {/* Validation Error Display */}
         {validationError && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              <span className="text-red-700 font-medium">{validationError}</span>
+              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 flex-shrink-0" />
+              <span className="text-red-700 font-medium text-sm sm:text-base">{validationError}</span>
             </div>
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             {/* Upload Type Selector */}
-            <div className="flex space-x-3 mb-6">
+            <div className="flex space-x-2 sm:space-x-3 mb-4 sm:mb-6">
               <button
                 type="button"
                 onClick={() => setUploadType("text")}
-                className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-xl border-2 transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-3 rounded-xl border-2 transition-all duration-200 text-sm sm:text-base ${
                   uploadType === "text" 
                     ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm" 
                     : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
@@ -256,13 +259,13 @@ const UploadModal = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={() => setUploadType("file")}
-                className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-xl border-2 transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-3 rounded-xl border-2 transition-all duration-200 text-sm sm:text-base ${
                   uploadType === "file" 
                     ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm" 
                     : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
-                <Mic className="h-5 w-5" />
+                <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="font-medium">Audio File</span>
               </button>
             </div>
@@ -280,10 +283,10 @@ const UploadModal = ({ isOpen, onClose }) => {
                     setValidationError("") // Clear validation error when typing
                   }}
                   placeholder="Paste your meeting transcript here..."
-                  className="w-full h-40 p-4 border-2 border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-400"
+                  className="w-full h-32 sm:h-40 p-3 sm:p-4 border-2 border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-400 text-sm sm:text-base"
                   disabled={uploadStatus === "uploading" || uploadStatus === "processing"}
                 />
-                <p className="text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500">
                   {textContent.length} characters
                 </p>
               </div>
@@ -293,7 +296,7 @@ const UploadModal = ({ isOpen, onClose }) => {
                   Audio File or Document
                 </label>
                 <div 
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+                  className={`border-2 border-dashed rounded-xl p-6 sm:p-8 text-center transition-all duration-300 ${
                     isDragOver 
                       ? "border-blue-400 bg-blue-50 scale-105" 
                       : file
@@ -315,31 +318,36 @@ const UploadModal = ({ isOpen, onClose }) => {
                   />
                   
                   {file ? (
-                    <div className="space-y-3">
-                      <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
+                    <div className="space-y-2 sm:space-y-3">
+                      <CheckCircle className="h-8 w-8 sm:h-12 sm:w-12 text-green-500 mx-auto" />
                       <div>
-                        <p className="font-medium text-gray-900">{file.name}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-gray-900 text-sm sm:text-base">{file.name}</p>
+                        <p className="text-xs sm:text-sm text-gray-500">
                           {(file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium"
                       >
                         Choose different file
                       </button>
                     </div>
                   ) : (
                     <label htmlFor="file-upload" className="cursor-pointer block">
-                      <Upload className={`h-12 w-12 mx-auto mb-4 transition-all duration-300 ${
+                      <Upload className={`h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 transition-all duration-300 ${
                         isDragOver ? "text-blue-500 scale-110" : "text-gray-400"
                       }`} />
-                      <p className="text-lg font-medium text-gray-900 mb-2">
-                        {isDragOver ? "Drop your file here" : "Drop files here or click to browse"}
+                      <p className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                        <span className="hidden sm:inline">
+                          {isDragOver ? "Drop your file here" : "Drop files here or click to browse"}
+                        </span>
+                        <span className="sm:hidden">
+                          {isDragOver ? "Drop file here" : "Click to browse"}
+                        </span>
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs sm:text-sm text-gray-500">
                         Supports audio files, .txt, and .docx documents
                       </p>
                     </label>
@@ -350,11 +358,11 @@ const UploadModal = ({ isOpen, onClose }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-3 mt-8">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-6 sm:mt-8">
             <button
               type="button"
               onClick={() => { onClose(); resetForm(); }}
-              className="flex-1 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium"
+              className="w-full sm:flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium text-sm sm:text-base"
               disabled={uploadStatus === "uploading" || uploadStatus === "processing"}
             >
               Cancel
@@ -368,12 +376,20 @@ const UploadModal = ({ isOpen, onClose }) => {
                 (uploadType === "text" && !textContent.trim()) ||
                 (uploadType === "file" && !file)
               }
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+              className="w-full sm:flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none text-sm sm:text-base"
             >
-              {uploadStatus === "uploading" ? "Uploading..." : 
-               uploadStatus === "processing" ? "Processing..." :
-               uploadStatus === "success" ? "Success!" :
-               "Upload & Analyze"}
+              <span className="hidden sm:inline">
+                {uploadStatus === "uploading" ? "Uploading..." : 
+                 uploadStatus === "processing" ? "Processing..." :
+                 uploadStatus === "success" ? "Success!" :
+                 "Upload & Analyze"}
+              </span>
+              <span className="sm:hidden">
+                {uploadStatus === "uploading" ? "Uploading..." : 
+                 uploadStatus === "processing" ? "Processing..." :
+                 uploadStatus === "success" ? "Success!" :
+                 "Upload"}
+              </span>
             </button>
           </div>
         </form>
