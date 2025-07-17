@@ -261,25 +261,31 @@ class WhisperService:
             transcription_start = time.time()
             
             # Use faster-whisper which is more memory efficient  
-            # Ultra-optimized settings for speed over accuracy on Render
-            segments, info = self.model.transcribe(
-                audio_file_path,
-                beam_size=1,  # Minimum beam size for maximum speed
-                language="en",  # Specify language to avoid detection overhead
-                condition_on_previous_text=False,  # Faster processing
-                vad_filter=True,  # Enable VAD to skip silence - helps with speed
-                vad_threshold=0.5,  # Higher threshold to be more aggressive
-                min_silence_duration_ms=1000,  # Skip 1+ second silences
-                word_timestamps=False,  # Disable word timestamps for speed
-                without_timestamps=False,  # Keep segment timestamps but optimize
-                initial_prompt=None,  # No initial prompt for speed
-                suppress_blank=True,  # Skip blank segments
-                suppress_tokens=[-1],  # Suppress special tokens
-                temperature=0.0,  # Deterministic output for speed
-                compression_ratio_threshold=2.4,  # Default but explicit
-                logprob_threshold=-1.0,  # Default but explicit
-                no_speech_threshold=0.6  # Skip segments with low speech probability
-            )
+            # Start with basic parameters and add optimizations that are supported
+            try:
+                # Try optimized parameters first
+                segments, info = self.model.transcribe(
+                    audio_file_path,
+                    beam_size=1,  # Minimum beam size for maximum speed
+                    language="en",  # Specify language to avoid detection overhead
+                    condition_on_previous_text=False,  # Faster processing
+                    vad_filter=True,  # Enable VAD to skip silence - helps with speed
+                    word_timestamps=False,  # Disable word timestamps for speed
+                    temperature=0.0,  # Deterministic output for speed
+                    suppress_blank=True,  # Skip blank segments
+                    no_speech_threshold=0.6  # Skip segments with low speech probability
+                )
+                self.logger.dual_print("Using optimized transcription parameters")
+            except TypeError as param_error:
+                # Fallback to basic parameters if some aren't supported
+                self.logger.dual_print(f"Parameter error, using basic transcription: {param_error}", "WARNING")
+                segments, info = self.model.transcribe(
+                    audio_file_path,
+                    beam_size=1,
+                    language="en",
+                    condition_on_previous_text=False,
+                    word_timestamps=False
+                )
             
             self.logger.info(f"Transcription info: duration={info.duration:.2f}s, language={info.language}")
             self.logger.dual_print(f"Audio duration: {info.duration:.2f}s")
