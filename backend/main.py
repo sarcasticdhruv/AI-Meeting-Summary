@@ -29,12 +29,13 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000", 
-        "http://localhost:8000", 
-        "http://localhost:4173",
-        "https://ai-meeting-frontend.onrender.com",  # Update with your actual URL
-        "https://*.onrender.com",  # Allow all Render domains
-        "https://ai-meeting-frontend-xxxx.onrender.com"  # Your specific frontend URL
+        "http://localhost:3000",  # Local Vite dev server
+        "http://localhost:8000",  # Local backend
+        "http://localhost:4173",  # Local Vite preview
+        "http://localhost:5173",  # Local Vite dev server (alternative port)
+        "https://meetsnap.onrender.com",  # Your actual frontend URL
+        "https://ai-meeting-backend-api.onrender.com",  # Your actual backend URL
+        "https://*.onrender.com"  # Allow all Render domains
     ],
     allow_credentials=True,
     allow_methods=["*"],

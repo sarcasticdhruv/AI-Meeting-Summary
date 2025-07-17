@@ -7,7 +7,7 @@ from typing import Optional
 
 
 class WhisperService:
-    def __init__(self, model_name: str = "base"):
+    def __init__(self, model_name: str = "tiny"):
         # Set FFmpeg path if needed
         self._setup_ffmpeg_path()
         
