@@ -39,11 +39,6 @@ A full-stack application that processes meeting transcripts using AI to generate
    PORT=8000
    ```
 
-   **For Neon PostgreSQL**, your connection string will look like:
-   ```env
-   POSTGRES_URL=postgresql://neondb_owner:abc123@ep-cold-hill-a4j8k2l9.us-east-1.aws.neon.tech/neondb?sslmode=require
-   ```
-
 4. Test your database connection:
    ```bash
    python test_db.py
@@ -130,12 +125,6 @@ Create a `.env` file in the backend directory:
 POSTGRES_URL=postgresql://username:password@host:port/database?sslmode=require
 GEMINI_API_KEY=your_google_gemini_api_key
 PORT=8000
-```
-
-**For Neon PostgreSQL:**
-```env
-POSTGRES_URL=postgresql://neondb_owner:abc123@ep-cold-hill-a4j8k2l9.us-east-1.aws.neon.tech/neondb?sslmode=require
-GEMINI_API_KEY=your_api_key_here
 ```
 
 ## Database Schema

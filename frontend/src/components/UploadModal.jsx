@@ -12,6 +12,8 @@ const UploadModal = ({ isOpen, onClose }) => {
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState("idle") // idle, uploading, processing, success, error
+  const [processingStage, setProcessingStage] = useState("") // For detailed progress during processing
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(null)
   const [validationError, setValidationError] = useState("")
   const [startTime, setStartTime] = useState(null)
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -28,6 +30,45 @@ const UploadModal = ({ isOpen, onClose }) => {
     return timer
   }, [])
 
+  // Simulate realistic processing stages for better UX during AI processing
+  const simulateProcessingProgress = useCallback(() => {
+    setProcessingStage("Initializing AI models...")
+    setUploadProgress(10)
+    setEstimatedTimeRemaining(180) // 3 minutes
+
+    const stages = [
+      { stage: "Loading audio processing models...", progress: 15, delay: 3000, timeRemaining: 170 },
+      { stage: "Transcribing audio with AI (this may take 2-3 minutes)...", progress: 25, delay: 8000, timeRemaining: 150 },
+      { stage: "Processing speech recognition...", progress: 40, delay: 30000, timeRemaining: 120 },
+      { stage: "Refining transcription accuracy...", progress: 60, delay: 60000, timeRemaining: 90 },
+      { stage: "Analyzing transcript content...", progress: 80, delay: 30000, timeRemaining: 45 },
+      { stage: "Generating meeting insights...", progress: 90, delay: 10000, timeRemaining: 15 },
+      { stage: "Extracting action items and key points...", progress: 95, delay: 8000, timeRemaining: 5 },
+      { stage: "Finalizing results...", progress: 98, delay: 3000, timeRemaining: 2 }
+    ]
+
+    let currentStageIndex = 0
+    
+    const updateStage = () => {
+      if (currentStageIndex >= stages.length) return
+      
+      const currentStage = stages[currentStageIndex]
+      setProcessingStage(currentStage.stage)
+      setUploadProgress(currentStage.progress)
+      setEstimatedTimeRemaining(currentStage.timeRemaining)
+      
+      const timer = setTimeout(() => {
+        currentStageIndex++
+        updateStage()
+      }, currentStage.delay)
+      
+      return timer
+    }
+    
+    // Start the first stage immediately
+    setTimeout(updateStage, 1000)
+  }, [])
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -36,10 +77,29 @@ const UploadModal = ({ isOpen, onClose }) => {
 
   const uploadMutation = useMutation({
     mutationFn: ({ data, onProgress }) => uploadTranscript(data, onProgress),
+    onMutate: () => {
+      setUploadProgress(5)
+      setProcessingStage("Uploading file...")
+      setEstimatedTimeRemaining(180)
+      const timer = startTimer()
+      setTimerRef(timer)
+      
+      // Start realistic progress simulation after initial upload
+      setTimeout(() => {
+        simulateProcessingProgress()
+      }, 2000)
+    },
     onSuccess: (data) => {
       console.log("Upload successful:", data)
       setUploadStatus("success")
       setUploadProgress(100)
+      setProcessingStage("Processing completed successfully!")
+      setEstimatedTimeRemaining(0)
+      
+      if (timerRef) {
+        clearInterval(timerRef)
+        setTimerRef(null)
+      }
       
       // Invalidate and refetch meetings data
       queryClient.invalidateQueries({ queryKey: ["recentMeetings"] })
@@ -55,6 +115,13 @@ const UploadModal = ({ isOpen, onClose }) => {
     onError: (error) => {
       console.error("Upload failed:", error)
       setUploadStatus("error")
+      setProcessingStage("Processing failed. Please try again.")
+      setEstimatedTimeRemaining(0)
+      
+      if (timerRef) {
+        clearInterval(timerRef)
+        setTimerRef(null)
+      }
     },
   })
 
@@ -67,6 +134,13 @@ const UploadModal = ({ isOpen, onClose }) => {
     setElapsedTime(0)
     setStartTime(null)
     setIsDragOver(false)
+    setProcessingStage("")
+    setEstimatedTimeRemaining(0)
+    
+    if (timerRef) {
+      clearInterval(timerRef)
+      setTimerRef(null)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -215,15 +289,39 @@ const UploadModal = ({ isOpen, onClose }) => {
             
             {(uploadStatus === "uploading" || uploadStatus === "processing") && (
               <>
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${uploadProgress}%` }}
                   ></div>
                 </div>
-                <div className="flex justify-between text-xs sm:text-sm text-gray-600">
-                  <span>{uploadProgress.toFixed(0)}% complete</span>
-                  <span>Time: {formatTime(elapsedTime)}</span>
+                
+                {/* Enhanced Progress Information */}
+                <div className="space-y-2 text-sm text-gray-600">
+                  {processingStage && (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                      <span className="font-medium">{processingStage}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between items-center">
+                    <span>Progress: {uploadProgress.toFixed(0)}%</span>
+                    {estimatedTimeRemaining > 0 && (
+                      <span className="text-blue-600 font-medium">
+                        ~{Math.ceil(estimatedTimeRemaining / 60)} min remaining
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span>Time: {formatTime(elapsedTime)}</span>
+                    {uploadType === "file" && uploadStatus === "processing" && (
+                      <span className="text-orange-600 text-xs">
+                        AI processing typically takes 2-3 minutes
+                      </span>
+                    )}
+                  </div>
                 </div>
               </>
             )}

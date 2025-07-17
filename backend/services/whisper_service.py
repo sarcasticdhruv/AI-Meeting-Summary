@@ -290,30 +290,24 @@ class WhisperService:
             self.logger.info(f"Transcription info: duration={info.duration:.2f}s, language={info.language}")
             self.logger.dual_print(f"Audio duration: {info.duration:.2f}s")
             
-            # Extract text from segments with better progress tracking
+            # Extract text from segments efficiently (avoid converting to list)
             transcript_text = ""
             segment_count = 0
             
-            # Convert segments generator to list for better progress tracking
-            self.logger.dual_print("Converting segments for processing...")
-            segment_list = list(segments)
-            total_segments = len(segment_list)
+            # Process segments directly from generator for better performance
+            self.logger.dual_print("Processing segments directly...")
+            processing_start = time.time()
             
-            self.logger.info(f"Total segments to process: {total_segments}")
-            self.logger.dual_print(f"PROCESSING {total_segments} segments...")
-            
-            for i, segment in enumerate(segment_list):
+            for segment in segments:
                 transcript_text += segment.text + " "
                 segment_count += 1
                 
-                # Log progress more frequently for debugging Render timeout
-                if segment_count % 3 == 0 or i == total_segments - 1:  # Every 3 segments or last
-                    progress_pct = (i + 1) / total_segments * 100
+                # Log progress every 5 segments for monitoring without performance hit
+                if segment_count % 5 == 0:
                     elapsed = time.time() - transcription_start
-                    self.logger.dual_print(f"Progress: {i+1}/{total_segments} ({progress_pct:.1f}%) - {elapsed:.1f}s elapsed")
-                if segment_count % 10 == 0:  # Log progress every 10 segments
-                    self.logger.dual_print(f"Processed {segment_count} segments...")
+                    self.logger.dual_print(f"Processed {segment_count} segments - {elapsed:.1f}s elapsed")
             
+            # Final progress update
             transcription_time = time.time() - transcription_start
             self.logger.info(f"Transcription completed in {transcription_time:.2f}s, {segment_count} segments")
             self.logger.dual_print(f"WHISPER COMPLETE - {transcription_time:.2f}s - {segment_count} segments")
