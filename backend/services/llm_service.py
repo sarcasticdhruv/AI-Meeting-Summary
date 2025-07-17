@@ -5,14 +5,26 @@ import google.generativeai as genai
 from typing import Dict
 from dotenv import load_dotenv
 import gc
+import logging
+import sys
+import time
 
 class LLMService:
     def __init__(self):
+        # Setup logging
+        self.logger = self._setup_logging()
+        
         # Configure the API key for Gemini
         load_dotenv()
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is not set")
+            error_msg = "GEMINI_API_KEY environment variable is not set"
+            self.logger.error(error_msg)
+            self.logger.dual_print(error_msg, "ERROR")
+            raise ValueError(error_msg)
+        
+        self.logger.info("Configuring Gemini API...")
+        self.logger.dual_print("LLM Service initializing...")
         
         genai.configure(api_key=api_key)
         # Use flash model for memory efficiency
@@ -25,9 +37,48 @@ class LLMService:
             top_p=0.8,
             top_k=20
         )
+        
+        self.logger.info("LLM Service initialized successfully")
+        self.logger.dual_print("LLM Service ready")
+    
+    def _setup_logging(self):
+        """Setup logging that works for both local and Render deployment"""
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
+        
+        # Clear any existing handlers
+        logger.handlers.clear()
+        
+        # Create formatter
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        
+        # Console handler (works for both local and Render)
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+        
+        # Force flush
+        console_handler.flush()
+        
+        # Print to both stdout and stderr for maximum visibility on Render
+        def dual_print(message, level="INFO"):
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            formatted_msg = f"{timestamp} - LLMService - {level} - {message}"
+            print(formatted_msg, flush=True)  # stdout
+            print(formatted_msg, file=sys.stderr, flush=True)  # stderr
+        
+        logger.dual_print = dual_print
+        return logger
 
     async def analyze_transcript(self, transcript: str) -> Dict:
         """Analyze meeting transcript and extract insights using Gemini"""
+        request_id = str(hash(transcript[:50]))[:8]  # Short ID for this request
+        
+        self.logger.info(f"[{request_id}] Starting LLM analysis - transcript length: {len(transcript)}")
+        self.logger.dual_print(f"[{request_id}] LLM ANALYSIS START - {len(transcript)} chars")
 
         prompt = f"""
         You are a meeting analysis assistant. Analyze the following meeting transcript and extract key information.
@@ -62,72 +113,104 @@ class LLMService:
         """
 
         try:
+            self.logger.info(f"[{request_id}] Sending request to Gemini API...")
+            self.logger.dual_print(f"[{request_id}] GEMINI API CALL...")
+            
+            api_start_time = time.time()
             # Use memory-optimized generation
             response = await asyncio.to_thread(
                 self.model.generate_content,
                 prompt,
                 generation_config=self.generation_config
             )
+            api_time = time.time() - api_start_time
+            
+            self.logger.info(f"[{request_id}] Gemini API responded in {api_time:.2f}s")
+            self.logger.dual_print(f"[{request_id}] GEMINI RESPONSE - {api_time:.2f}s")
 
             # Check if response exists and has text
             if not response:
-                raise ValueError("No response from Gemini API")
+                error_msg = "No response from Gemini API"
+                self.logger.error(f"[{request_id}] {error_msg}")
+                self.logger.dual_print(f"[{request_id}] NO RESPONSE", "ERROR")
+                raise ValueError(error_msg)
             
             if not hasattr(response, 'text') or not response.text:
-                raise ValueError("Gemini response has no text content")
+                error_msg = "Gemini response has no text content"
+                self.logger.error(f"[{request_id}] {error_msg}")
+                self.logger.dual_print(f"[{request_id}] NO TEXT CONTENT", "ERROR")
+                raise ValueError(error_msg)
 
             content = response.text.strip()
-            print("🔹 Gemini raw output:")
-            print(f"   Length: {len(content)}")
-            print(f"   Content: {repr(content[:300])}")  # Reduced from 500 to save memory
+            self.logger.info(f"[{request_id}] Gemini raw output length: {len(content)}")
+            self.logger.dual_print(f"[{request_id}] RAW OUTPUT - {len(content)} chars")
 
             # Guard: empty output
             if not content:
-                raise ValueError("Gemini response was empty")
+                error_msg = "Gemini response was empty"
+                self.logger.error(f"[{request_id}] {error_msg}")
+                self.logger.dual_print(f"[{request_id}] EMPTY RESPONSE", "ERROR")
+                raise ValueError(error_msg)
 
             # Try to extract JSON from the text (best-effort)
             json_start = content.find("{")
             json_end = content.rfind("}")
             
-            print(f"🔹 JSON extraction: start={json_start}, end={json_end}")
+            self.logger.info(f"[{request_id}] JSON extraction: start={json_start}, end={json_end}")
+            self.logger.dual_print(f"[{request_id}] JSON EXTRACT - start={json_start}, end={json_end}")
             
             if json_start == -1 or json_end == -1:
-                print("🔴 No JSON structure found in response")
-                raise ValueError("JSON format not found in response")
+                error_msg = "No JSON structure found in response"
+                self.logger.error(f"[{request_id}] {error_msg}")
+                self.logger.dual_print(f"[{request_id}] NO JSON STRUCTURE", "ERROR")
+                raise ValueError(error_msg)
 
             json_text = content[json_start:json_end + 1]
-            print(f"🔹 Extracted JSON text: {repr(json_text[:200])}")
+            self.logger.info(f"[{request_id}] Extracted JSON length: {len(json_text)}")
+            self.logger.dual_print(f"[{request_id}] JSON EXTRACTED - {len(json_text)} chars")
 
             if not json_text or json_text == "{}":
-                raise ValueError("Extracted JSON is empty or invalid")
+                error_msg = "Extracted JSON is empty or invalid"
+                self.logger.error(f"[{request_id}] {error_msg}")
+                self.logger.dual_print(f"[{request_id}] EMPTY JSON", "ERROR")
+                raise ValueError(error_msg)
 
             # Try to parse the JSON
             try:
                 result = json.loads(json_text)
-                print("🟢 Successfully parsed JSON result")
+                self.logger.info(f"[{request_id}] Successfully parsed JSON result")
+                self.logger.dual_print(f"[{request_id}] JSON PARSE SUCCESS")
+                
+                # Force memory cleanup after successful processing
+                del content, response
+                gc.collect()
                 return result
+                
             except json.JSONDecodeError as json_error:
-                print(f"🔴 JSON decode error: {json_error}")
-                print(f"🔴 Failed JSON text: {repr(json_text)}")
+                self.logger.error(f"[{request_id}] JSON decode error: {json_error}")
+                self.logger.dual_print(f"[{request_id}] JSON DECODE ERROR: {json_error}", "ERROR")
                 
                 # Try cleaning the JSON text
                 cleaned_json = json_text.replace("'", '"').replace("True", "true").replace("False", "false").replace("None", "null")
                 try:
                     result = json.loads(cleaned_json)
-                    print("🟢 Successfully parsed cleaned JSON")
+                    self.logger.info(f"[{request_id}] Successfully parsed cleaned JSON")
+                    self.logger.dual_print(f"[{request_id}] CLEANED JSON SUCCESS")
+                    
+                    # Force memory cleanup
+                    del content, response
+                    gc.collect()
                     return result
+                    
                 except json.JSONDecodeError:
-                    print("🔴 Even cleaned JSON failed to parse")
+                    self.logger.error(f"[{request_id}] Even cleaned JSON failed to parse")
+                    self.logger.dual_print(f"[{request_id}] CLEANED JSON FAILED", "ERROR")
                     raise ValueError(f"Failed to parse JSON: {json_error}")
 
-            # Force memory cleanup after successful processing
-            del content, response
-            gc.collect()
-            return result
-
         except Exception as e:
-            print(f"🔴 Error analyzing transcript: {e}")
-            print(f"🔴 Error type: {type(e).__name__}")
+            error_msg = f"Error analyzing transcript: {e}"
+            self.logger.error(f"[{request_id}] {error_msg}")
+            self.logger.dual_print(f"[{request_id}] LLM ERROR: {e}", "ERROR")
             
             # Force cleanup on error too
             gc.collect()
