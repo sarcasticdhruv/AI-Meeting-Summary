@@ -63,6 +63,7 @@ async def health_check():
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"🚀 Starting server on 0.0.0.0:{port}")
+    print(f"🌍 Environment PORT: {os.getenv('PORT', 'Not set')}")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

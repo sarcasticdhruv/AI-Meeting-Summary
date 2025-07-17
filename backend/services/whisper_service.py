@@ -11,6 +11,12 @@ class WhisperService:
         # Set FFmpeg path if needed
         self._setup_ffmpeg_path()
         
+        # Use tiny model for memory efficiency on free tier
+        # tiny = ~39MB, base = ~74MB, small = ~244MB
+        if model_name not in ["tiny"]:
+            print(f"⚠️ Using 'tiny' model instead of '{model_name}' for memory efficiency")
+            model_name = "tiny"
+        
         # Load model (tiny, base, small, medium, large)
         self.model = whisper.load_model(model_name)
         self._verify_ffmpeg()
