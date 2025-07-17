@@ -19,19 +19,41 @@ class WhisperService:
             model_name = "tiny"
         
         print(f"🔧 Loading faster-whisper model: {model_name}")
-        # Use CPU and optimize for memory
-        self.model = WhisperModel(
-            model_name, 
-            device="cpu",
-            compute_type="int8",  # Use int8 for lower memory usage
-            download_root="/tmp",  # Use /tmp for model cache
-            local_files_only=False
-        )
-        print(f"✅ Faster-whisper model '{model_name}' loaded successfully")
+        
+        # Initialize model with error handling and memory optimization
+        self.model = None
+        self._initialize_model(model_name)
+        
         self._verify_ffmpeg()
         
         # Force garbage collection to free memory
         gc.collect()
+        
+    def _initialize_model(self, model_name: str):
+        """Initialize Whisper model with robust error handling"""
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                # Use CPU and optimize for memory
+                self.model = WhisperModel(
+                    model_name, 
+                    device="cpu",
+                    compute_type="int8",  # Use int8 for lower memory usage
+                    download_root="/tmp",  # Use /tmp for model cache
+                    local_files_only=False
+                )
+                print(f"✅ Faster-whisper model '{model_name}' loaded successfully")
+                return
+            except Exception as e:
+                print(f"❌ Attempt {attempt + 1}/{max_retries} failed to load model: {e}")
+                if attempt == max_retries - 1:
+                    print(f"💡 Falling back to runtime model loading")
+                    # Don't raise error, handle at transcription time
+                    self.model = None
+                    return
+                # Wait a bit before retry
+                import time
+                time.sleep(2)
     
     def _setup_ffmpeg_path(self):
         """Setup FFmpeg path in environment"""
@@ -134,6 +156,13 @@ class WhisperService:
         # Final check before transcription
         if not os.path.exists(audio_file_path):
             raise FileNotFoundError(f"File not found at transcription time: {audio_file_path}")
+        
+        # Lazy load model if not initialized
+        if self.model is None:
+            print("🔄 Loading model at runtime...")
+            self._initialize_model("tiny")
+            if self.model is None:
+                raise Exception("Failed to load Whisper model")
         
         try:
             print(f"🔧 Starting faster-whisper transcription")

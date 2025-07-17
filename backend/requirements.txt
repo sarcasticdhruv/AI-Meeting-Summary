@@ -2,6 +2,12 @@
 --prefer-binary
 # Use only faster-whisper (more memory efficient than openai-whisper)
 faster-whisper==1.0.0
+# Required dependencies for faster-whisper
+av>=10.0.0
+ctranslate2>=3.20.0
+huggingface-hub>=0.13.0
+tokenizers>=0.13.0
+# Core FastAPI dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
@@ -11,5 +17,3 @@ pydantic==2.5.0
 aiofiles==23.2.1
 google-generativeai==0.8.3
 asyncpg==0.29.0
-# Removed psycopg2-binary (redundant with asyncpg)
-# Removed openai-whisper (using faster-whisper instead)
