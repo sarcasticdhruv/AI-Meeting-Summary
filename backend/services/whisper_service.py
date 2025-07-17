@@ -1,9 +1,10 @@
-import whisper
+from faster_whisper import WhisperModel
 import asyncio
 import os
 import subprocess
 import shutil
 from typing import Optional
+import gc
 
 
 class WhisperService:
@@ -12,14 +13,25 @@ class WhisperService:
         self._setup_ffmpeg_path()
         
         # Use tiny model for memory efficiency on free tier
-        # tiny = ~39MB, base = ~74MB, small = ~244MB
+        # faster-whisper is much more memory efficient than openai-whisper
         if model_name not in ["tiny"]:
             print(f"⚠️ Using 'tiny' model instead of '{model_name}' for memory efficiency")
             model_name = "tiny"
         
-        # Load model (tiny, base, small, medium, large)
-        self.model = whisper.load_model(model_name)
+        print(f"🔧 Loading faster-whisper model: {model_name}")
+        # Use CPU and optimize for memory
+        self.model = WhisperModel(
+            model_name, 
+            device="cpu",
+            compute_type="int8",  # Use int8 for lower memory usage
+            download_root="/tmp",  # Use /tmp for model cache
+            local_files_only=False
+        )
+        print(f"✅ Faster-whisper model '{model_name}' loaded successfully")
         self._verify_ffmpeg()
+        
+        # Force garbage collection to free memory
+        gc.collect()
     
     def _setup_ffmpeg_path(self):
         """Setup FFmpeg path in environment"""
@@ -118,44 +130,41 @@ class WhisperService:
             raise Exception(f"Failed to transcribe: {str(e)}")
 
     def _transcribe_sync_safe(self, audio_file_path: str) -> str:
-        """Blocking transcription method with additional safety checks."""
+        """Memory-optimized transcription method using faster-whisper."""
         # Final check before transcription
         if not os.path.exists(audio_file_path):
             raise FileNotFoundError(f"File not found at transcription time: {audio_file_path}")
         
         try:
-            # Try transcription with different options to avoid FFmpeg issues
-            print(f"🔧 Attempting transcription with verbose=True")
+            print(f"🔧 Starting faster-whisper transcription")
             
-            # Option 1: Basic transcription
-            result = self.model.transcribe(
+            # Use faster-whisper which is more memory efficient
+            segments, info = self.model.transcribe(
                 audio_file_path,
-                verbose=True,
-                fp16=False  # Force FP32 to avoid the warning
+                beam_size=1,  # Reduce beam size for memory efficiency
+                language="en",  # Specify language to avoid detection overhead
+                vad_filter=True,  # Voice Activity Detection to reduce processing
+                vad_parameters=dict(min_silence_duration_ms=500)
             )
-            return result["text"]
+            
+            # Extract text from segments
+            transcript_text = ""
+            for segment in segments:
+                transcript_text += segment.text + " "
+            
+            # Clean up and force garbage collection
+            del segments, info
+            gc.collect()
+            
+            print(f"✅ Faster-whisper transcription completed")
+            return transcript_text.strip()
             
         except Exception as e:
-            print(f"❌ First transcription attempt failed: {e}")
-            
-            # Option 2: Try with different parameters
-            try:
-                print(f"🔧 Attempting transcription with no_speech_threshold")
-                result = self.model.transcribe(
-                    audio_file_path,
-                    verbose=False,
-                    fp16=False,
-                    no_speech_threshold=0.6
-                )
-                return result["text"]
-            except Exception as e2:
-                print(f"❌ Second transcription attempt failed: {e2}")
-                
-                # Check if file still exists to help debug
-                file_exists = os.path.exists(audio_file_path)
-                raise Exception(f"All transcription attempts failed. Original error: {e}. File exists: {file_exists}")
+            print(f"❌ Faster-whisper transcription failed: {e}")
+            # Force cleanup on error
+            gc.collect()
+            raise Exception(f"Transcription failed: {str(e)}")
 
     def _transcribe_sync(self, audio_file_path: str) -> str:
-        """Blocking transcription method."""
-        result = self.model.transcribe(audio_file_path)
-        return result["text"]
+        """Legacy method - now calls the optimized version."""
+        return self._transcribe_sync_safe(audio_file_path)

@@ -17,13 +17,16 @@ async def init_db_pool():
     global pool
     if pool is None:
         try:
+            # Optimize pool size for memory efficiency
             pool = await asyncpg.create_pool(
                 dsn=POSTGRES_URL,
-                min_size=1,
-                max_size=10,
-                command_timeout=60
+                min_size=1,          # Reduced from default
+                max_size=3,          # Reduced from 10 to save memory
+                command_timeout=30,   # Reduced timeout
+                max_cached_statement_lifetime=300,  # Cache statements for 5 min
+                max_inactive_connection_lifetime=1800  # 30 min max idle
             )
-            print("✅ Database connection pool initialized successfully")
+            print("✅ Database connection pool initialized successfully (memory optimized)")
         except Exception as e:
             print(f"❌ Failed to initialize database pool: {e}")
             raise

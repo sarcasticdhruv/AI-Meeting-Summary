@@ -2,22 +2,39 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for audio processing
+# Use Python 3.11 slim for smaller memory footprint
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install only essential system dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     wget \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies with memory optimization
+RUN pip install --no-cache-dir --no-deps -r requirements.txt && \
+    pip cache purge && \
+    rm -rf ~/.cache/pip
 
-# Pre-download only the tiny Whisper model to save memory
-# Tiny model is ~39MB vs base model ~74MB
-RUN python -c "import whisper; whisper.load_model('tiny')" && \
-    echo "✅ Whisper tiny model pre-downloaded successfully"
+# Pre-download only the tiny model to /tmp for memory efficiency
+RUN python -c "
+from faster_whisper import WhisperModel
+import os
+import shutil
+# Download to /tmp and clean up
+model = WhisperModel('tiny', device='cpu', compute_type='int8', download_root='/tmp')
+print('✅ Faster-whisper tiny model pre-downloaded successfully')
+# Force cleanup
+del model
+import gc
+gc.collect()
+" && echo "✅ Model download completed"
 
 # Copy the application code
 COPY . .
@@ -28,8 +45,8 @@ RUN chmod +x start.sh
 # Create necessary directories
 RUN mkdir -p tmp uploads
 
-# Expose the port
-EXPOSE $PORT
+# Expose port 10000 (Render's default) but app will use PORT env var
+EXPOSE 10000
 
 # Command to run the application
 CMD ["./start.sh"]

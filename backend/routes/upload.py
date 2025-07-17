@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 import uuid
 import subprocess
+import gc
 
 from services.llm_service import LLMService
 from services.whisper_service import WhisperService
@@ -12,6 +13,7 @@ from models.schemas import UploadResponse, TextUploadRequest
 from db.database import save_meeting
 
 router = APIRouter()
+# Initialize services once to save memory
 llm_service = LLMService()
 whisper_service = WhisperService()
 
@@ -73,6 +75,10 @@ async def upload_transcript(request: TextUploadRequest):
         })
         
         print(f"✅ Meeting saved with ID: {meeting_id}")
+        
+        # Force cleanup after processing
+        del analysis, action_items, objections
+        gc.collect()
         
         return UploadResponse(
             id=meeting_id,
@@ -141,6 +147,8 @@ async def upload_audio(file: UploadFile = File(...)):
             
     except Exception as e:
         print(f"❌ Upload error: {e}")
+        # Force cleanup on error
+        gc.collect()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         # Clean up temp file only if it was created
@@ -150,3 +158,6 @@ async def upload_audio(file: UploadFile = File(...)):
                 print(f"🗑️ Cleaned up temp file: {temp_file_path}")
             except Exception as cleanup_error:
                 print(f"⚠️ Failed to cleanup temp file: {cleanup_error}")
+        
+        # Force garbage collection after processing
+        gc.collect()

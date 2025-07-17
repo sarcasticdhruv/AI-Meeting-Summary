@@ -61,12 +61,21 @@ async def health_check():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))
+    # Memory optimization for 512MB limit
+    import gc
+    gc.set_threshold(50, 5, 5)  # More aggressive garbage collection
+    
+    # Render typically uses port 10000, fallback to 8000 for local dev
+    port = int(os.getenv("PORT", 8000))  # Changed back to 8000 for local dev
     print(f"🚀 Starting server on 0.0.0.0:{port}")
-    print(f"🌍 Environment PORT: {os.getenv('PORT', 'Not set')}")
+    print(f"🌍 Environment PORT: {os.getenv('PORT', 'Not set - using default 8000')}")
+    print(f"💾 Memory optimization enabled")
+    
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=port,
-        reload=False  # Disable reload in production
+        reload=False,  # Disable reload in production
+        workers=1,     # Single worker to save memory
+        access_log=False  # Disable access logs to save memory
     )
