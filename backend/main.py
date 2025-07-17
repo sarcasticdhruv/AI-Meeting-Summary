@@ -33,9 +33,11 @@ app.add_middleware(
         "http://localhost:8000",  # Local backend
         "http://localhost:4173",  # Local Vite preview
         "http://localhost:5173",  # Local Vite dev server (alternative port)
-        "https://meetsnap.onrender.com",  # Your actual frontend URL
+        "https://meetsnap.onrender.com",  # Your deployed frontend
         "https://ai-meeting-backend-api.onrender.com",  # Your actual backend URL
-        "https://*.onrender.com"  # Allow all Render domains
+        "https://*.onrender.com",  # Allow all Render domains
+        "https://*.preview.app.github.dev",  # GitHub Codespaces
+        "https://*.app.github.dev",  # GitHub Codespaces alternative
     ],
     allow_credentials=True,
     allow_methods=["*"],
