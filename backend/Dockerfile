@@ -23,18 +23,8 @@ RUN pip install --no-cache-dir --no-deps -r requirements.txt && \
     rm -rf ~/.cache/pip
 
 # Pre-download only the tiny model to /tmp for memory efficiency
-RUN python -c "
-from faster_whisper import WhisperModel
-import os
-import shutil
-# Download to /tmp and clean up
-model = WhisperModel('tiny', device='cpu', compute_type='int8', download_root='/tmp')
-print('✅ Faster-whisper tiny model pre-downloaded successfully')
-# Force cleanup
-del model
-import gc
-gc.collect()
-" && echo "✅ Model download completed"
+RUN python -c "from faster_whisper import WhisperModel; import os; import shutil; import gc; model = WhisperModel('tiny', device='cpu', compute_type='int8', download_root='/tmp'); print('✅ Faster-whisper tiny model pre-downloaded successfully'); del model; gc.collect()" && \
+    echo "✅ Model download completed"
 
 # Copy the application code
 COPY . .
