@@ -17,6 +17,7 @@ const UploadModal = ({ isOpen, onClose }) => {
   const [validationError, setValidationError] = useState("")
   const [startTime, setStartTime] = useState(null)
   const [elapsedTime, setElapsedTime] = useState(0)
+  const [timerRef, setTimerRef] = useState(null)
   const fileInputRef = useRef(null)
   const queryClient = useQueryClient()
 
