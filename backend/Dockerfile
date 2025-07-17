@@ -23,11 +23,14 @@ RUN python -c "import whisper; whisper.load_model('tiny')" && \
 # Copy the application code
 COPY . .
 
+# Make startup script executable
+RUN chmod +x start.sh
+
 # Create necessary directories
 RUN mkdir -p tmp uploads
 
 # Expose the port
-EXPOSE 8000
+EXPOSE $PORT
 
 # Command to run the application
-CMD ["python", "main.py"]
+CMD ["./start.sh"]

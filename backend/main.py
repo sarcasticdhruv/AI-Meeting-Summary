@@ -61,9 +61,11 @@ async def health_check():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    print(f"🚀 Starting server on 0.0.0.0:{port}")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.getenv("PORT", 8000)),
+        port=port,
         reload=False  # Disable reload in production
     )

@@ -1,6 +1,13 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Use production backend URL when deployed, localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' 
+    ? "https://ai-meeting-backend-api.onrender.com" 
+    : "http://localhost:8000");
+
+console.log('🔗 API Base URL:', API_BASE_URL);
+console.log('🌍 Environment Mode:', import.meta.env.MODE);
 
 const api = axios.create({
   baseURL: API_BASE_URL,

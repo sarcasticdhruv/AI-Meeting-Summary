@@ -1,18 +1,18 @@
-# # Build Configuration for Render Static Site
+# Build Configuration for Render Static Site
 
-# # Install dependencies and build
-# build: npm ci && npm run build
+# Install dependencies and build
+build: npm ci && npm run build
 
-# # Serve from dist directory
-# publish: dist
+# Serve from dist directory
+publish: dist
 
-# # Environment variables for build
-# environment:
-#   # VITE_API_URL: https://your-backend-url.onrender.com
+# Environment variables for build
+environment:
+  VITE_API_URL: https://ai-meeting-backend-api.onrender.com
 
-# # Headers for better caching
-# headers:
-#   /assets/*:
-#     Cache-Control: public, max-age=31536000, immutable
-#   /:
-#     Cache-Control: public, max-age=0, must-revalidate
+# Headers for better caching
+headers:
+  /assets/*:
+    Cache-Control: public, max-age=31536000, immutable
+  /:
+    Cache-Control: public, max-age=0, must-revalidate
