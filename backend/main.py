@@ -84,10 +84,12 @@ app.include_router(export.router, prefix="/export", tags=["export"])
 app.include_router(email.router, prefix="/email", tags=["email"])
 
 @app.get("/")
+@app.head("/")
 async def root():
     return {"message": "AI Meeting Summary API is running"}
 
 @app.get("/health")
+@app.head("/health")
 async def health_check():
     health_status = {
         "status": "healthy", 
