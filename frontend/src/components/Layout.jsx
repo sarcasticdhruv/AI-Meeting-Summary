@@ -12,6 +12,7 @@ import {
   CheckCircle,
   Menu,
   X,
+  FileText,
 } from "lucide-react"
 import UploadModal from "./UploadModal"
 import UserProfileDropdown from "./UserProfileDropdown"
@@ -72,12 +73,12 @@ const Layout = ({ children }) => {
             </button>
             
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-soft">
-              <LayoutDashboard className="h-6 w-6 text-white" />
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-soft">
+              <FileText className="h-6 w-6 text-white" />
             </div>
             <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
-              <span className="hidden sm:inline">Meeting Insights</span>
-              <span className="sm:hidden">Insights</span>
+              <span className="hidden sm:inline">BoardBrief</span>
+              <span className="sm:hidden">BB</span>
             </span>
           </div>
           </div>
@@ -85,7 +86,7 @@ const Layout = ({ children }) => {
           <div className="flex items-center space-x-2 sm:space-x-3">
             <button
               onClick={() => setIsUploadModalOpen(true)}
-              className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-3 sm:px-4 py-2 rounded-xl text-sm font-medium hover:shadow-medium transform hover:scale-105 flex items-center space-x-1 sm:space-x-2 transition-all duration-200"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 sm:px-4 py-2 rounded-xl text-sm font-medium hover:shadow-medium transform hover:scale-105 flex items-center space-x-1 sm:space-x-2 transition-all duration-200"
             >
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Upload</span>
@@ -106,7 +107,7 @@ const Layout = ({ children }) => {
                     to={item.href}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                       isActive(item.href) 
-                        ? "bg-primary-50 text-primary-700 shadow-soft" 
+                        ? "bg-blue-50 text-blue-700 shadow-soft" 
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -133,12 +134,12 @@ const Layout = ({ children }) => {
                     to={item.href}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
                       isActive(item.href) 
-                        ? "bg-gradient-to-r from-primary-50 to-primary-100 text-primary-700 shadow-soft" 
+                        ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 shadow-soft" 
                         : "text-gray-700 hover:bg-gray-50/80 hover:shadow-soft"
                     }`}
                   >
                     <Icon className={`h-5 w-5 transition-colors ${
-                      isActive(item.href) ? "text-primary-600" : "text-gray-500 group-hover:text-gray-700"
+                      isActive(item.href) ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
                     }`} />
                     <span>{item.name}</span>
                   </Link>

@@ -67,7 +67,7 @@ app.add_middleware(
         "http://localhost:8000",  # Local backend
         "http://localhost:4173",  # Local Vite preview
         "http://localhost:5173",  # Local Vite dev server (alternative port)
-        "https://meeting-insights-fullstack.onrender.com",  # Your actual deployment URL
+        "https://boardbrief.onrender.com",  # my actual deployment URL
         "https://*.onrender.com"  # Allow all Render domains
     ],
     allow_credentials=True,
@@ -85,6 +85,17 @@ app.include_router(meetings.router, prefix="/meetings", tags=["meetings"])
 app.include_router(actions.router, prefix="/action-items", tags=["actions"])
 app.include_router(export.router, prefix="/export", tags=["export"])
 app.include_router(email.router, prefix="/email", tags=["email"])
+
+# Health check endpoint for deployment platforms
+@app.get("/health")
+@app.head("/health")
+async def health_check():
+    """Health check endpoint for deployment platforms like Render"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "AI Meeting Summary API"
+    }
 
 # Mount static files for the React frontend
 static_dir = Path(__file__).parent.parent / "frontend" / "dist"
