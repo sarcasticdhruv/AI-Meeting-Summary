@@ -89,9 +89,21 @@ app.include_router(email.router, prefix="/email", tags=["email"])
 # Mount static files for the React frontend
 static_dir = Path(__file__).parent.parent / "frontend" / "dist"
 if static_dir.exists():
-    print(f"📁 Mounting static files from: {static_dir}", flush=True)
-    app.mount("/static", StaticFiles(directory=static_dir / "static"), name="static")
-    app.mount("/assets", StaticFiles(directory=static_dir / "assets"), name="assets")
+    print(f"📁 Static directory found: {static_dir}", flush=True)
+    
+    # List contents of the dist directory for debugging
+    try:
+        contents = list(static_dir.iterdir())
+        print(f"📂 Dist directory contents: {[item.name for item in contents]}", flush=True)
+        
+        # Mount subdirectories that exist
+        for item in contents:
+            if item.is_dir():
+                print(f"📂 Mounting /{item.name} from {item}", flush=True)
+                app.mount(f"/{item.name}", StaticFiles(directory=item), name=item.name)
+    except Exception as e:
+        print(f"⚠️  Error listing dist directory: {e}", flush=True)
+    
 else:
     print(f"⚠️  Static directory not found: {static_dir}", flush=True)
 
@@ -109,13 +121,25 @@ async def root():
 @app.get("/{path:path}")
 async def serve_react_app(path: str):
     # Don't serve React app for API routes
-    if path.startswith(("auth", "upload", "meetings", "action-items", "export", "email", "health", "debug")):
+    api_prefixes = ["auth", "upload", "meetings", "action-items", "export", "email", "health", "debug"]
+    
+    if any(path.startswith(prefix) for prefix in api_prefixes):
         raise HTTPException(status_code=404, detail="Not found")
     
     static_dir = Path(__file__).parent.parent / "frontend" / "dist"
+    
+    # Check if path matches any mounted static directories
+    path_parts = path.split("/")
+    if path_parts and static_dir.exists():
+        first_part = path_parts[0]
+        mounted_dir = static_dir / first_part
+        if mounted_dir.exists() and mounted_dir.is_dir():
+            # This should be handled by the mounted static files, so skip
+            raise HTTPException(status_code=404, detail="Not found")
+    
     file_path = static_dir / path
     
-    # If it's a specific file and exists, serve it
+    # If it's a specific file and exists, serve it directly
     if file_path.is_file():
         return FileResponse(file_path)
     
