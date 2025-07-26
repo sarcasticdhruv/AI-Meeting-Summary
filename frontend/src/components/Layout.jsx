@@ -11,7 +11,8 @@ import {
   X, 
   FileText,
   Upload,
-  Circle
+  Circle,
+  Puzzle
 } from "lucide-react"
 import UserProfileDropdown from "./UserProfileDropdown"
 import UploadModal from "./UploadModal"
