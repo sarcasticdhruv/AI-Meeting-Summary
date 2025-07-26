@@ -1,21 +1,20 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
-import {
-  LayoutDashboard,
-  Calendar,
-  CheckSquare,
-  SettingsIcon,
-  Puzzle,
-  Upload,
-  User,
-  Circle,
-  CheckCircle,
-  Menu,
-  X,
+import { 
+  LayoutDashboard, 
+  Calendar, 
+  CheckSquare, 
+  BarChart3, 
+  Settings, 
+  Plus, 
+  Menu, 
+  X, 
   FileText,
+  Upload,
+  Circle
 } from "lucide-react"
-import UploadModal from "./UploadModal"
 import UserProfileDropdown from "./UserProfileDropdown"
+import UploadModal from "./UploadModal"
 import { fetchActionItems } from "../services/api"
 
 const Layout = ({ children }) => {
@@ -36,6 +35,7 @@ const Layout = ({ children }) => {
   useEffect(() => {
     const loadActionItems = async () => {
       try {
+        setIsLoadingActions(true)
         const items = await fetchActionItems()
         // Show only pending items, limit to 5 for sidebar
         const pendingItems = items.filter(item => !item.completed).slice(0, 5)

@@ -144,7 +144,14 @@ export const fetchActionItems = async () => {
     return response.data
   } catch (error) {
     console.error("Error fetching action items:", error)
-    throw error
+    // Fallback to upcoming actions if main endpoint fails
+    try {
+      console.log("Falling back to upcoming actions endpoint...")
+      return await fetchUpcomingActions()
+    } catch (fallbackError) {
+      console.error("Fallback also failed:", fallbackError)
+      throw error
+    }
   }
 }
 
