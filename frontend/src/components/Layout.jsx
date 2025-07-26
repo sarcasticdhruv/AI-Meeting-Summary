@@ -30,7 +30,7 @@ const Layout = ({ children }) => {
     { name: "Meetings", href: "/meetings", icon: Calendar },
     { name: "Action Items", href: "/action-items", icon: CheckSquare },
     { name: "Integrations", href: "/integrations", icon: Puzzle },
-    { name: "Settings", href: "/settings", icon: SettingsIcon },
+    { name: "Settings", href: "/settings", icon: Settings },
   ]
 
   useEffect(() => {
