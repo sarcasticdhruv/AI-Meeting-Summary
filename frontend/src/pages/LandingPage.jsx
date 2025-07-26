@@ -130,7 +130,7 @@ const LandingPage = () => {
               </span>
             </div>
             
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-gray-900 mb-8 lg:mb-12 leading-[1.1] tracking-tight">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-gray-900 mb-12 lg:mb-16 leading-[1.1] tracking-tight">
               Transform Your{" "}
               <span className="relative">
                 <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">

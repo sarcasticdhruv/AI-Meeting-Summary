@@ -16,7 +16,7 @@ services:
       - key: POSTGRES_URL
         sync: false  # Set this manually in Render dashboard
       - key: VITE_API_URL
-        value: https://meeting-insights-fullstack.onrender.com
+        value: ""  # Use relative URLs since frontend and backend are on same domain
     # Health check will hit the FastAPI backend directly
     healthCheckPath: /health
     disk:

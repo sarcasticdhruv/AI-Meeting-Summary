@@ -1,6 +1,26 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Use production backend URL when deployed, localhost for development  
+const getApiBaseUrl = () => {
+  // If VITE_API_URL is explicitly set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // In production, use relative path (same domain)
+  if (import.meta.env.MODE === 'production') {
+    return "";  // Use relative URLs in production
+  }
+  
+  // In development, use localhost
+  return "http://localhost:8000";
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🔗 Auth API Base URL:', API_BASE_URL);
+console.log('🌍 Auth Environment Mode:', import.meta.env.MODE);
+console.log('🌍 Auth VITE_API_URL:', import.meta.env.VITE_API_URL);
 
 const authAPI = axios.create({
   baseURL: `${API_BASE_URL}/auth`,
