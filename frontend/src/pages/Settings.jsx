@@ -94,25 +94,25 @@ const Settings = () => {
       {saveMessage && (
         <div className={`p-4 rounded-xl ${
           saveMessage.includes('success') 
-            ? 'bg-green-50 border border-green-200 text-green-700' 
-            : 'bg-red-50 border border-red-200 text-red-700'
+            ? 'bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-300' 
+            : 'bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300'
         }`}>
           {saveMessage}
         </div>
       )}
 
       {/* Notifications */}
-      <div className="bg-white border border-gray-200/50 rounded-2xl p-6 shadow-soft">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 shadow-soft">
         <div className="flex items-center space-x-3 mb-6">
-          <Bell className="h-5 w-5 text-gray-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
+          <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Notifications</h2>
         </div>
 
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
             <div>
-              <p className="font-medium text-gray-900">Email Notifications</p>
-              <p className="text-sm text-gray-600">Receive summaries and updates via email</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">Email Notifications</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Receive summaries and updates via email</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -121,14 +121,14 @@ const Settings = () => {
                 onChange={(e) => updateSetting('emailNotifications', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
             <div>
-              <p className="font-medium text-gray-900">Push Notifications</p>
-              <p className="text-sm text-gray-600">Get notified about action item deadlines</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">Push Notifications</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Get notified about action item deadlines</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -137,14 +137,14 @@ const Settings = () => {
                 onChange={(e) => updateSetting('pushNotifications', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
             <div>
-              <p className="font-medium text-gray-900">Auto Processing</p>
-              <p className="text-sm text-gray-600">Automatically process uploads with AI</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">Auto Processing</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Automatically process uploads with AI</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input

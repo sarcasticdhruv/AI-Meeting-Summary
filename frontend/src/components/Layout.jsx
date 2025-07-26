@@ -97,7 +97,7 @@ const Layout = ({ children }) => {
         
         {/* Mobile navigation menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t border-gray-200/50 animate-slide-down">
+          <div className="md:hidden mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50 animate-slide-down">
             <nav className="space-y-1">
               {navigation.map((item) => {
                 const Icon = item.icon
@@ -107,8 +107,8 @@ const Layout = ({ children }) => {
                     to={item.href}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                       isActive(item.href) 
-                        ? "bg-blue-50 text-blue-700 shadow-soft" 
-                        : "text-gray-700 hover:bg-gray-50"
+                        ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 shadow-soft" 
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -123,7 +123,7 @@ const Layout = ({ children }) => {
 
       <div className="flex">
         {/* Desktop Sidebar */}
-        <div className="hidden md:block w-72 bg-white/50 backdrop-blur-sm border-r border-gray-200/50 min-h-screen">
+        <div className="hidden md:block w-72 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-r border-gray-200/50 dark:border-gray-700/50 min-h-screen">
           <div className="p-6">
             <nav className="space-y-1">
               {navigation.map((item) => {
@@ -134,12 +134,12 @@ const Layout = ({ children }) => {
                     to={item.href}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
                       isActive(item.href) 
-                        ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 shadow-soft" 
-                        : "text-gray-700 hover:bg-gray-50/80 hover:shadow-soft"
+                        ? "bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/50 dark:to-blue-800/50 text-blue-700 dark:text-blue-300 shadow-soft" 
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50/80 dark:hover:bg-gray-700/80 hover:shadow-soft"
                     }`}
                   >
                     <Icon className={`h-5 w-5 transition-colors ${
-                      isActive(item.href) ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700"
+                      isActive(item.href) ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
                     }`} />
                     <span>{item.name}</span>
                   </Link>
@@ -149,10 +149,10 @@ const Layout = ({ children }) => {
 
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Recent Actions</h3>
+                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Recent Actions</h3>
                 <Link 
                   to="/action-items" 
-                  className="text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors"
+                  className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
                 >
                   View All
                 </Link>
@@ -162,8 +162,8 @@ const Layout = ({ children }) => {
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
                       <div key={i} className="px-4 py-3 animate-pulse">
-                        <div className="h-3 bg-gray-200 rounded-lg w-full mb-2"></div>
-                        <div className="h-2 bg-gray-200 rounded-lg w-2/3"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded-lg w-full mb-2"></div>
+                        <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded-lg w-2/3"></div>
                       </div>
                     ))}
                   </div>
@@ -171,13 +171,13 @@ const Layout = ({ children }) => {
                   actionItems.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50/80 rounded-xl transition-all duration-200 group"
+                      className="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50/80 dark:hover:bg-gray-700/80 rounded-xl transition-all duration-200 group"
                     >
-                      <Circle className="h-3 w-3 mt-1 flex-shrink-0 text-gray-400 group-hover:text-primary-500 transition-colors" />
+                      <Circle className="h-3 w-3 mt-1 flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors" />
                       <div className="flex-1 min-w-0">
                         <p className="truncate text-xs font-medium">{item.task}</p>
                         {item.meeting_title && (
-                          <p className="text-xs text-gray-500 truncate">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                             From: {item.meeting_title}
                           </p>
                         )}
@@ -185,7 +185,7 @@ const Layout = ({ children }) => {
                     </div>
                   ))
                 ) : (
-                  <div className="px-4 py-3 text-xs text-gray-500 text-center bg-gray-50/50 rounded-xl">
+                  <div className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 text-center bg-gray-50/50 dark:bg-gray-700/50 rounded-xl">
                     No pending actions
                   </div>
                 )}

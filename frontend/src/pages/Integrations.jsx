@@ -104,7 +104,7 @@ const Integrations = () => {
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
               selectedCategory === category
                 ? "bg-primary-600 text-white shadow-lg"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
             {category}
@@ -119,7 +119,7 @@ const Integrations = () => {
           return (
             <div
               key={integration.id}
-              className="bg-white border border-gray-200/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group"
+              className="bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start space-x-4">
@@ -127,25 +127,25 @@ const Integrations = () => {
                     <Icon className="h-6 w-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{integration.name}</h3>
-                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg font-medium">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{integration.name}</h3>
+                    <span className="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-lg font-medium">
                       {integration.category}
                     </span>
                   </div>
                 </div>
                 {integration.connected && (
-                  <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="h-5 w-5 text-green-500 dark:text-green-400 flex-shrink-0" />
                 )}
               </div>
 
-              <p className="text-gray-600 text-sm mb-6 leading-relaxed">{integration.description}</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-6 leading-relaxed">{integration.description}</p>
 
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => toggleConnection(integration.id)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
                     integration.connected 
-                      ? "bg-green-100 text-green-700 hover:bg-green-200" 
+                      ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/70" 
                       : "bg-primary-600 text-white hover:bg-primary-700 hover:shadow-md"
                   }`}
                 >
@@ -154,7 +154,7 @@ const Integrations = () => {
                 </button>
 
                 {integration.connected && (
-                  <button className="text-gray-400 hover:text-gray-600 text-sm font-medium">
+                  <button className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 text-sm font-medium">
                     Configure
                   </button>
                 )}
@@ -165,32 +165,32 @@ const Integrations = () => {
       </div>
 
       {/* Integration Stats */}
-      <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-200/50">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-soft border border-gray-200/50 dark:border-gray-700/50">
         <div className="flex items-center space-x-3 mb-6">
           <div className="w-1 h-6 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
-          <h2 className="text-lg font-bold text-gray-900">Integration Status</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Integration Status</h2>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/50 dark:to-green-800/50 rounded-xl">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {integrations.filter(i => i.connected).length}
             </div>
-            <div className="text-sm text-green-700 font-medium">Connected</div>
+            <div className="text-sm text-green-700 dark:text-green-300 font-medium">Connected</div>
           </div>
           
-          <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/50 dark:to-blue-800/50 rounded-xl">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {integrations.length}
             </div>
-            <div className="text-sm text-blue-700 font-medium">Available</div>
+            <div className="text-sm text-blue-700 dark:text-blue-300 font-medium">Available</div>
           </div>
           
-          <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/50 dark:to-purple-800/50 rounded-xl">
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
               {Math.round((integrations.filter(i => i.connected).length / integrations.length) * 100)}%
             </div>
-            <div className="text-sm text-purple-700 font-medium">Coverage</div>
+            <div className="text-sm text-purple-700 dark:text-purple-300 font-medium">Coverage</div>
           </div>
         </div>
       </div>
