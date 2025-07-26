@@ -17,11 +17,9 @@ RUN npm run build
 FROM python:3.11-slim AS backend-setup
 WORKDIR /app
 
-# Install system dependencies for FFmpeg, nginx, and supervisor
+# Install system dependencies for FFmpeg and build tools
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    nginx \
-    supervisor \
     wget \
     curl \
     build-essential \
@@ -61,11 +59,11 @@ RUN mkdir -p /app/backend/tmp /app/backend/uploads /app/backend/logs
 
 # Create startup script with Whisper model pre-loading
 RUN echo '#!/bin/bash\n\
-echo "🚀 Starting Unified Meeting Insights Application..."\n\
-echo "🐍 Backend: $(python --version)"\n\
-echo "🌐 Frontend: React (built and served by FastAPI)"\n\
-echo "📂 Working directory: $(pwd)"\n\
-echo "🌐 Port: ${PORT:-8080}"\n\
+echo "Starting Unified Meeting Insights Application..."\n\
+echo "Backend: $(python --version)"\n\
+echo "Frontend: React (built and served by FastAPI)"\n\
+echo "Working directory: $(pwd)"\n\
+echo "Port: ${PORT:-8080}"\n\
 \n\
 # Pre-download Whisper model for faster startups\n\
 echo "🔄 Initializing Whisper model..."\n\
@@ -80,7 +78,7 @@ except Exception as e:\n\
     print(f\"⚠️  Model will be downloaded on first use: {e}\")\n\
 "\n\
 \n\
-echo "🎯 Starting FastAPI server..."\n\
+echo "Starting FastAPI server..."\n\
 cd /app/backend\n\
 exec python main.py' > /app/start.sh && \
 chmod +x /app/start.sh
