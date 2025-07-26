@@ -3,10 +3,10 @@
 # Use only faster-whisper (more memory efficient than openai-whisper)
 faster-whisper==1.0.0
 # Required dependencies for faster-whisper
-av>=10.0.0
+# av>=10.0.0
 ctranslate2>=3.20.0
 huggingface-hub>=0.13.0
-tokenizers>=0.13.0
+# tokenizers>=0.13.0
 # Core FastAPI dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
@@ -18,3 +18,9 @@ aiofiles==23.2.1
 google-generativeai==0.8.3
 asyncpg==0.29.0
 psutil==5.9.6  # For memory monitoring
+
+# Authentication dependencies
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+pyjwt==2.8.0
+bcrypt==4.0.1

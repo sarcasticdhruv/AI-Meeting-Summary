@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: meeting-insights-fullstack
+    env: docker
+    plan: starter
+    # Use the unified Dockerfile we just created
+    dockerfilePath: ./Dockerfile
+    buildCommand: |
+      echo "🔧 Building unified frontend + backend application..."
+      echo "📦 Docker build will handle all dependencies"
+      echo "✅ Build process delegated to Dockerfile"
+    # The Dockerfile handles everything, so no additional start command needed
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: GEMINI_API_KEY
+        sync: false  # Set this manually in Render dashboard
+      - key: POSTGRES_URL
+        sync: false  # Set this manually in Render dashboard
+      - key: VITE_API_URL
+        value: https://meeting-insights-fullstack.onrender.com
+    # Health check will hit the FastAPI backend through nginx proxy
+    healthCheckPath: /health
+    disk:
+      name: fullstack-storage
+      mountPath: /app/backend/tmp
+      sizeGB: 2
+    headers:
+      - path: "/**"
+        name: "X-Frame-Options"
+        value: "DENY"
+      - path: "/**"
+        name: "X-Content-Type-Options"
+        value: "nosniff"
+      - path: "/static/**"
+        name: "Cache-Control"
+        value: "public, max-age=31536000, immutable"

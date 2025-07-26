@@ -47,28 +47,24 @@ env.bak/
 venv.bak/
 .venv/
 
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
-
 # Node.js and npm
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 .npm
 .yarn-integrity
 
 # Build outputs
 /frontend/dist/
 /frontend/build/
+dist/
+dist-ssr/
 *.tgz
 *.tar.gz
+*.local
 
 # Logs
 logs/
@@ -80,6 +76,19 @@ tmp/
 temp/
 *.tmp
 *.temp
+
+# IDE and editor files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # OS generated files
 .DS_Store
@@ -129,12 +138,7 @@ settings_local.py
 .cache/
 .parcel-cache/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Docker files (optional - uncomment if you don't want these in git)
+# Dockerfile
+# docker-compose.yml
+# .dockerignore

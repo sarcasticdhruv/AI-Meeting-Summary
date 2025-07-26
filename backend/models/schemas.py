@@ -22,6 +22,8 @@ class UploadResponse(BaseModel):
     action_items: List[ActionItem]
     objections: List[Objection]
     crm_notes: str
+    title: Optional[str] = None
+    request_id: Optional[str] = None
 
 class MeetingResponse(BaseModel):
     id: int

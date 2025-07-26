@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from models.schemas import EmailRequest
+from models.user_schemas import UserResponse
+from routes.auth import get_current_user
 from services.email_service import EmailService
 from db.database import get_meeting_by_id
 
@@ -7,13 +9,16 @@ router = APIRouter()
 email_service = EmailService()
 
 @router.post("/summary")
-async def send_email_summary(request: EmailRequest):
+async def send_email_summary(
+    request: EmailRequest,
+    current_user: UserResponse = Depends(get_current_user)
+):
     """Send meeting summary via email"""
     try:
         print(f"Email request received: meeting_id={request.meeting_id}, email={request.email}")
         
-        # Get meeting data
-        meeting = await get_meeting_by_id(request.meeting_id)
+        # Get meeting data (ensure it belongs to the user)
+        meeting = await get_meeting_by_id(request.meeting_id, user_id=current_user.id)
         if not meeting:
             print(f"Meeting not found with ID: {request.meeting_id}")
             raise HTTPException(status_code=404, detail="Meeting not found")

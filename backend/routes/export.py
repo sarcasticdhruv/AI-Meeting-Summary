@@ -1,20 +1,25 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import StreamingResponse
 from typing import Optional
 import json
 import csv
 import io
 
+from models.user_schemas import UserResponse
+from routes.auth import get_current_user
 from db.database import get_meetings, get_action_items, get_meeting_by_id
 from utils.export_utils import format_meetings_for_csv, format_action_items_for_csv
 
 router = APIRouter()
 
 @router.get("/meetings")
-async def export_meetings(format: str = Query("json", regex="^(json|csv)$")):
+async def export_meetings(
+    format: str = Query("json", regex="^(json|csv)$"),
+    current_user: UserResponse = Depends(get_current_user)
+):
     """Export meetings data in JSON or CSV format"""
     try:
-        meetings = await get_meetings(limit=1000)  # Get all meetings
+        meetings = await get_meetings(limit=1000, user_id=current_user.id)  # Get user's meetings only
         
         if format == "json":
             json_data = json.dumps(meetings, indent=2, default=str)
@@ -36,10 +41,14 @@ async def export_meetings(format: str = Query("json", regex="^(json|csv)$")):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/meeting/{meeting_id}")
-async def export_meeting(meeting_id: int, format: str = Query("json", regex="^(json|csv)$")):
+async def export_meeting(
+    meeting_id: int, 
+    format: str = Query("json", regex="^(json|csv)$"),
+    current_user: UserResponse = Depends(get_current_user)
+):
     """Export a specific meeting data in JSON or CSV format"""
     try:
-        meeting = await get_meeting_by_id(meeting_id)
+        meeting = await get_meeting_by_id(meeting_id, user_id=current_user.id)
         
         if not meeting:
             raise HTTPException(status_code=404, detail="Meeting not found")
@@ -66,10 +75,13 @@ async def export_meeting(meeting_id: int, format: str = Query("json", regex="^(j
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/action-items")
-async def export_action_items(format: str = Query("json", regex="^(json|csv)$")):
+async def export_action_items(
+    format: str = Query("json", regex="^(json|csv)$"),
+    current_user: UserResponse = Depends(get_current_user)
+):
     """Export action items data in JSON or CSV format"""
     try:
-        action_items = await get_action_items(limit=1000)  # Get all action items
+        action_items = await get_action_items(limit=1000, user_id=current_user.id)  # Get user's action items only
         
         if format == "json":
             json_data = json.dumps(action_items, indent=2, default=str)

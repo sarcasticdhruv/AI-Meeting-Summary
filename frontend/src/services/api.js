@@ -3,7 +3,7 @@ import axios from "axios";
 // Use production backend URL when deployed, localhost for development
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.MODE === 'production' 
-    ? "https://ai-meeting-backend-api.onrender.com" 
+    ? "/api"  // In production, nginx proxies /api to backend
     : "http://localhost:8000");
 
 console.log('🔗 API Base URL:', API_BASE_URL);
@@ -15,6 +15,33 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
 
 // ✅ This function handles uploading a transcript as plain text
 export const uploadTranscript = async (data, onProgress = null) => {
@@ -61,6 +88,20 @@ export const uploadTranscript = async (data, onProgress = null) => {
     }
     
     throw error.response?.data || error.message;
+  }
+}
+
+// ✅ Poll progress for real-time updates
+export const getUploadProgress = async (requestId) => {
+  try {
+    const response = await api.get(`/upload/progress/${requestId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Progress polling error:", error);
+    if (error.response?.status === 404) {
+      return null; // Progress not found
+    }
+    throw error;
   }
 }
 
@@ -242,6 +283,16 @@ export const fetchRecentClients = async () => {
     return response.data.clients
   } catch (error) {
     console.error("Error fetching recent clients:", error)
+    throw error
+  }
+}
+
+export const fetchAnalytics = async () => {
+  try {
+    const response = await api.get("/meetings/analytics")
+    return response.data
+  } catch (error) {
+    console.error("Error fetching analytics:", error)
     throw error
   }
 }

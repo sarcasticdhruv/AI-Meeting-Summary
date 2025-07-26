@@ -1,7 +1,0 @@
-version: 1
-build:
-  commands:
-    - echo "Building backend..."
-    - cd backend && pip install -r requirements.txt
-start:
-  command: cd backend && PORT=10000 python main.py

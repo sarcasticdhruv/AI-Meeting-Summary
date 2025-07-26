@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react"
 import UploadModal from "./UploadModal"
+import UserProfileDropdown from "./UserProfileDropdown"
 import { fetchActionItems } from "../services/api"
 
 const Layout = ({ children }) => {
@@ -57,45 +58,28 @@ const Layout = ({ children }) => {
   }, [location.pathname])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
       {/* Top Navigation */}
-      <nav className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 px-4 sm:px-6 py-4 sticky top-0 z-40">
+      <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 px-4 sm:px-6 py-4 sticky top-0 z-40 transition-colors duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100/80 transition-colors"
+              className="md:hidden p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-colors"
             >
               {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-soft">
-                <LayoutDashboard className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                <span className="hidden sm:inline">Meeting Insights</span>
-                <span className="sm:hidden">Insights</span>
-              </span>
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-soft">
+              <LayoutDashboard className="h-6 w-6 text-white" />
             </div>
-            
-            {/* Desktop navigation */}
-            <div className="hidden lg:flex space-x-1 ml-8">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    isActive(item.href) 
-                      ? "bg-primary-50 text-primary-700 shadow-soft" 
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
+            <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+              <span className="hidden sm:inline">Meeting Insights</span>
+              <span className="sm:hidden">Insights</span>
+            </span>
+          </div>
           </div>
           
           <div className="flex items-center space-x-2 sm:space-x-3">
@@ -106,9 +90,7 @@ const Layout = ({ children }) => {
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Upload</span>
             </button>
-            <div className="h-10 w-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center shadow-soft">
-              <User className="h-5 w-5 text-gray-600" />
-            </div>
+            <UserProfileDropdown />
           </div>
         </div>
         

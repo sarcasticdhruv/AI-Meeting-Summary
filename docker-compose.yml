@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Development setup - separate services
   backend:
     build: ./backend
     ports:
@@ -13,5 +14,27 @@ services:
       - ./backend/tmp:/app/tmp
     restart: unless-stopped
 
-  # Frontend is deployed separately as a static site on Render
-  # No Docker container needed for frontend
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # Production-like unified setup for testing
+  fullstack:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./backend/tmp:/app/backend/tmp
+    restart: unless-stopped
+    profiles:
+      - prod
+
+# Default: run backend only for development (frontend runs via npm run dev)
+# For full development: docker-compose up backend frontend
+# For production testing: docker-compose --profile prod up fullstack

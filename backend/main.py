@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 import logging
 import sys
 
-from routes import upload, meetings, actions, export, email
+from routes import upload, meetings, actions, export, email, auth
 from db.database import init_database, close_db_pool
 
 @asynccontextmanager
@@ -77,6 +77,7 @@ app.add_middleware(
 # init_database()  # Remove this line since we're using lifespan now
 
 # Include routers
+app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(upload.router, prefix="/upload", tags=["upload"])
 app.include_router(meetings.router, prefix="/meetings", tags=["meetings"])
 app.include_router(actions.router, prefix="/action-items", tags=["actions"])

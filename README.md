@@ -39,12 +39,7 @@ A full-stack application that processes meeting transcripts using AI to generate
    PORT=8000
    ```
 
-4. Test your database connection:
-   ```bash
-   python test_db.py
-   ```
-
-5. Start the backend server:
+4. Start the backend server:
    ```bash
    python main.py
    ```
@@ -102,6 +97,45 @@ Open VS Code and use Ctrl+Shift+P → "Tasks: Run Task" to select a task.
 - `PATCH /action-items/{id}` - Update action item
 - `POST /email/summary` - Send email summary
 - `GET /export/meetings` - Export meetings data
+
+## Deployment
+
+### Unified Production Deployment (Recommended)
+
+This project now supports unified deployment where both frontend and backend run in a single container with nginx handling routing.
+
+**For Render.com deployment:**
+
+1. Use the `render.yaml` file for one-click deployment
+2. Set environment variables in Render dashboard:
+   - `GEMINI_API_KEY`: Your Google Gemini API key
+   - `POSTGRES_URL`: Your PostgreSQL connection string
+3. The unified container serves React frontend and proxies API calls to FastAPI backend
+
+**Local testing of production setup:**
+```bash
+# Test the unified container locally
+docker-compose --profile prod up fullstack
+
+# This will serve the app on http://localhost:8080
+# Both frontend and API accessible from same domain
+```
+
+**Development setup:**
+```bash
+# Run separate containers for development
+docker-compose --profile dev up
+
+# Backend: http://localhost:8000
+# Frontend: http://localhost:3000
+```
+
+### Architecture
+
+- **Nginx**: Serves React build files and proxies `/api/*` to FastAPI
+- **FastAPI**: Backend API running on port 8000 (internal)
+- **Supervisor**: Process manager running both nginx and FastAPI
+- **Single Container**: Everything runs in one Docker container for simple deployment
 
 ## Tech Stack
 

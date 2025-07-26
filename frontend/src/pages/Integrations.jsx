@@ -1,79 +1,199 @@
-import { Mail, Slack, CalendarIcon, Database, AlertTriangle } from "lucide-react"
-
+import { useState } from "react"
+import { Mail, Slack, CalendarIcon, Database, Globe, Zap, CheckCircle, ExternalLink, AlertTriangle } from "lucide-react"
 
 const Integrations = () => {
-  // const integrations = [
-  //   {
-  //     name: "Email",
-  //     description: "Send meeting summaries via email",
-  //     icon: Mail,
-  //     connected: false,
-  //     color: "bg-red-500",
-  //   },
-  //   {
-  //     name: "Slack",
-  //     description: "Post summaries to Slack channels",
-  //     icon: Slack,
-  //     connected: false,
-  //     color: "bg-purple-500",
-  //   },
-  //   {
-  //     name: "Calendar",
-  //     description: "Sync action items with calendar",
-  //     icon: CalendarIcon,
-  //     connected: true,
-  //     color: "bg-blue-500",
-  //   },
-  //   {
-  //     name: "CRM",
-  //     description: "Export notes to your CRM system",
-  //     icon: Database,
-  //     connected: false,
-  //     color: "bg-green-500",
-  //   },
-  // ]
+  const [integrations, setIntegrations] = useState([
+    {
+      id: 'email',
+      name: "Email Notifications",
+      description: "Send meeting summaries and action items via email",
+      icon: Mail,
+      connected: true,
+      color: "bg-red-500",
+      category: "Communication",
+      config: { enabled: true, autoSend: true }
+    },
+    {
+      id: 'slack',
+      name: "Slack",
+      description: "Post summaries to Slack channels automatically",
+      icon: Slack,
+      connected: false,
+      color: "bg-purple-500",
+      category: "Communication",
+      config: { channel: "#meetings", mentions: true }
+    },
+    {
+      id: 'calendar',
+      name: "Calendar Sync",
+      description: "Sync action items with Google Calendar or Outlook",
+      icon: CalendarIcon,
+      connected: true,
+      color: "bg-blue-500",
+      category: "Productivity",
+      config: { autoSchedule: true, reminders: true }
+    },
+    {
+      id: 'crm',
+      name: "CRM Integration",
+      description: "Export notes and insights to your CRM system",
+      icon: Database,
+      connected: false,
+      color: "bg-green-500",
+      category: "Sales",
+      config: { autoSync: false, fields: ['summary', 'actions'] }
+    },
+    {
+      id: 'webhook',
+      name: "Webhooks",
+      description: "Send data to custom endpoints for advanced workflows",
+      icon: Zap,
+      connected: false,
+      color: "bg-yellow-500",
+      category: "Developer",
+      config: { url: '', headers: {} }
+    },
+    {
+      id: 'zapier',
+      name: "Zapier",
+      description: "Connect with 5000+ apps through Zapier automation",
+      icon: Globe,
+      connected: false,
+      color: "bg-orange-500",
+      category: "Automation",
+      config: { triggers: ['new_meeting', 'action_completed'] }
+    }
+  ])
+
+  const [selectedCategory, setSelectedCategory] = useState("All")
+  const categories = ["All", "Communication", "Productivity", "Sales", "Developer", "Automation"]
+
+  const toggleConnection = (integrationId) => {
+    setIntegrations(prev => prev.map(integration => 
+      integration.id === integrationId 
+        ? { ...integration, connected: !integration.connected }
+        : integration
+    ))
+  }
+
+  const filteredIntegrations = integrations.filter(integration => 
+    selectedCategory === "All" || integration.category === selectedCategory
+  )
 
   return (
-    // <div className="space-y-6">
-    //   <div>
-    //     <h1 className="text-2xl font-bold text-gray-900">Integrations</h1>
-    //     <p className="text-gray-600 mt-1">Connect your favorite tools to streamline your workflow.</p>
-    //   </div>
+    <div className="space-y-6 sm:space-y-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 sm:p-8 text-white shadow-large">
+        <div className="flex items-center space-x-3 mb-3">
+          <div className="p-2 bg-white/20 rounded-xl">
+            <Zap className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Integrations</h1>
+        </div>
+        <p className="text-primary-100 text-sm sm:text-base">
+          Connect your favorite tools to streamline your meeting workflow.
+        </p>
+      </div>
 
-    //   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    //     {integrations.map((integration) => {
-    //       const Icon = integration.icon
-    //       return (
-    //         <div
-    //           key={integration.name}
-    //           className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
-    //         >
-    //           <div className="flex items-start justify-between">
-    //             <div className="flex items-start space-x-4">
-    //               <div className={`${integration.color} p-3 rounded-lg`}>
-    //                 <Icon className="h-6 w-6 text-white" />
-    //               </div>
-    //               <div>
-    //                 <h3 className="text-lg font-semibold text-gray-900">{integration.name}</h3>
-    //                 <p className="text-gray-600 text-sm mt-1">{integration.description}</p>
-    //               </div>
-    //             </div>
-    //             <button
-    //               className={`px-4 py-2 rounded-lg text-sm font-medium ${
-    //                 integration.connected ? "bg-green-100 text-green-700" : "bg-blue-600 text-white hover:bg-blue-700"
-    //               }`}
-    //             >
-    //               {integration.connected ? "Connected" : "Connect"}
-    //             </button>
-    //           </div>
-    //         </div>
-    //       )
-    //     })}
-    //   </div>
-    // </div>
-    <div className="flex flex-col items-center justify-center h-full py-20">
-      <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
-      <h1 className="text-2xl font-semibold text-gray-800">Integrations Page Under Construction</h1>
+      {/* Category Filter */}
+      <div className="flex flex-wrap gap-2 sm:gap-3">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              selectedCategory === category
+                ? "bg-primary-600 text-white shadow-lg"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
+      {/* Integration Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredIntegrations.map((integration) => {
+          const Icon = integration.icon
+          return (
+            <div
+              key={integration.id}
+              className="bg-white border border-gray-200/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 group"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start space-x-4">
+                  <div className={`${integration.color} p-3 rounded-xl shadow-soft`}>
+                    <Icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{integration.name}</h3>
+                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-lg font-medium">
+                      {integration.category}
+                    </span>
+                  </div>
+                </div>
+                {integration.connected && (
+                  <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                )}
+              </div>
+
+              <p className="text-gray-600 text-sm mb-6 leading-relaxed">{integration.description}</p>
+
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => toggleConnection(integration.id)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+                    integration.connected 
+                      ? "bg-green-100 text-green-700 hover:bg-green-200" 
+                      : "bg-primary-600 text-white hover:bg-primary-700 hover:shadow-md"
+                  }`}
+                >
+                  <span>{integration.connected ? "Connected" : "Connect"}</span>
+                  {!integration.connected && <ExternalLink className="h-4 w-4" />}
+                </button>
+
+                {integration.connected && (
+                  <button className="text-gray-400 hover:text-gray-600 text-sm font-medium">
+                    Configure
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Integration Stats */}
+      <div className="bg-white rounded-2xl p-6 shadow-soft border border-gray-200/50">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-1 h-6 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
+          <h2 className="text-lg font-bold text-gray-900">Integration Status</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+            <div className="text-2xl font-bold text-green-600">
+              {integrations.filter(i => i.connected).length}
+            </div>
+            <div className="text-sm text-green-700 font-medium">Connected</div>
+          </div>
+          
+          <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+            <div className="text-2xl font-bold text-blue-600">
+              {integrations.length}
+            </div>
+            <div className="text-sm text-blue-700 font-medium">Available</div>
+          </div>
+          
+          <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+            <div className="text-2xl font-bold text-purple-600">
+              {Math.round((integrations.filter(i => i.connected).length / integrations.length) * 100)}%
+            </div>
+            <div className="text-sm text-purple-700 font-medium">Coverage</div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

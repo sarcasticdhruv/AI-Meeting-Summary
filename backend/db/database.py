@@ -10,6 +10,10 @@ load_dotenv()
 
 POSTGRES_URL = os.getenv("POSTGRES_URL", "postgresql://user:pass@localhost/dbname")
 
+print(f"🌍 Database URL loaded: {POSTGRES_URL[:50]}...")
+if POSTGRES_URL == "postgresql://user:pass@localhost/dbname":
+    print("⚠️  Using default database URL - .env file might not be loaded correctly!")
+
 # Create a global connection pool
 pool: Optional[asyncpg.Pool] = None
 
@@ -17,6 +21,7 @@ async def init_db_pool():
     global pool
     if pool is None:
         try:
+            print(f"🔗 Connecting to database: {POSTGRES_URL[:50]}...")
             # Optimize pool size for memory efficiency
             pool = await asyncpg.create_pool(
                 dsn=POSTGRES_URL,
@@ -29,16 +34,51 @@ async def init_db_pool():
             print("✅ Database connection pool initialized successfully (memory optimized)")
         except Exception as e:
             print(f"❌ Failed to initialize database pool: {e}")
+            print(f"❌ Database URL: {POSTGRES_URL[:50]}...")
+            pool = None  # Ensure pool is None on failure
             raise
+    else:
+        print("🔄 Database pool already initialized")
+
+async def get_db_connection():
+    """Get a database connection, initializing pool if needed"""
+    if pool is None:
+        await init_db_pool()
+    
+    if pool is None:
+        raise Exception("Database pool initialization failed")
+    
+    return pool
 
 async def init_database():
     """Initialize PostgreSQL database with required tables"""
     try:
+        print("🔧 Initializing database...")
         await init_db_pool()
+        
+        if pool is None:
+            raise Exception("Database pool initialization failed - pool is None")
+        
         async with pool.acquire() as conn:
+            print("🔧 Creating database tables...")
+            # Create users table first
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    full_name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+            """)
+            print("✅ Users table ready")
+            
+            # Create meetings table with user_id reference
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS meetings (
                     id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                     title TEXT NOT NULL,
                     summary TEXT,
                     transcript TEXT,
@@ -51,6 +91,8 @@ async def init_database():
                     created_at TIMESTAMPTZ DEFAULT NOW()
                 );
             """)
+            print("✅ Meetings table ready")
+            
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS action_items (
                     id SERIAL PRIMARY KEY,
@@ -63,14 +105,36 @@ async def init_database():
                     created_at TIMESTAMPTZ DEFAULT NOW()
                 );
             """)
+            print("✅ Action items table ready")
+            
+            # Add user_id column to existing meetings table if it doesn't exist
+            try:
+                await conn.execute("""
+                    ALTER TABLE meetings ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+                """)
+            except Exception as e:
+                print(f"Note: user_id column might already exist: {e}")
+            
+            # Data migration: For existing meetings without user_id, create a default user or leave them unassigned
+            # Check if there are meetings without user_id
+            orphaned_meetings = await conn.fetchval("""
+                SELECT COUNT(*) FROM meetings WHERE user_id IS NULL
+            """)
+            
+            if orphaned_meetings > 0:
+                print(f"⚠️  Found {orphaned_meetings} meetings without user association")
+                print("📝 These meetings will remain accessible for backward compatibility")
+                print("💡 When users register, only their new meetings will be associated with their account")
+            
             print("✅ Database tables initialized successfully")
     except Exception as e:
         print(f"❌ Failed to initialize database: {e}")
+        import traceback
+        traceback.print_exc()
         raise
 
-async def save_meeting(meeting_data: Dict) -> int:
+async def save_meeting(meeting_data: Dict, user_id: Optional[int] = None) -> int:
     try:
-        await init_db_pool()
         async with pool.acquire() as conn:
             async with conn.transaction():
                 # Convert lists to JSON strings for PostgreSQL JSONB storage
@@ -82,10 +146,11 @@ async def save_meeting(meeting_data: Dict) -> int:
                 print(f"🔍 Objections: {len(meeting_data.get('objections', []))} items")
                 
                 row = await conn.fetchrow("""
-                    INSERT INTO meetings (title, summary, transcript, action_items, objections, crm_notes, participants, duration, client)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    INSERT INTO meetings (user_id, title, summary, transcript, action_items, objections, crm_notes, participants, duration, client)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                     RETURNING id
-                """, meeting_data.get("title"),
+                """, user_id,
+                     meeting_data.get("title"),
                      meeting_data.get("summary"),
                      meeting_data.get("transcript"),
                      action_items_json,  # JSON string for JSONB
@@ -118,13 +183,19 @@ async def save_meeting(meeting_data: Dict) -> int:
         print(f"❌ Meeting data: {meeting_data}")
         raise
 
-async def get_meetings(limit: int = 50, offset: int = 0, search: Optional[str] = None, date_filter: Optional[datetime] = None, order_by: str = "created_at DESC") -> List[Dict]:
+async def get_meetings(limit: int = 50, offset: int = 0, search: Optional[str] = None, date_filter: Optional[datetime] = None, order_by: str = "created_at DESC", user_id: Optional[int] = None) -> List[Dict]:
     try:
         await init_db_pool()
         query = "SELECT * FROM meetings"
         conditions = []
         values = []
         param_count = 1
+
+        # Add user_id filter if provided
+        if user_id is not None:
+            conditions.append(f"user_id = ${param_count}")
+            values.append(user_id)
+            param_count += 1
 
         if search:
             conditions.append(f"(title ILIKE ${param_count} OR summary ILIKE ${param_count})")
@@ -145,7 +216,8 @@ async def get_meetings(limit: int = 50, offset: int = 0, search: Optional[str] =
         print(f"🔍 Executing query: {query}")
         print(f"🔍 With values: {values}")
 
-        async with pool.acquire() as conn:
+        db_pool = await get_db_connection()
+        async with db_pool.acquire() as conn:
             rows = await conn.fetch(query, *values)
 
         print(f"🔍 Found {len(rows)} meetings")
@@ -196,11 +268,19 @@ async def get_meetings(limit: int = 50, offset: int = 0, search: Optional[str] =
         print(f"❌ Error fetching meetings: {e}")
         raise
 
-async def get_meeting_by_id(meeting_id: int) -> Optional[Dict]:
+async def get_meeting_by_id(meeting_id: int, user_id: Optional[int] = None) -> Optional[Dict]:
     try:
-        await init_db_pool()
-        async with pool.acquire() as conn:
-            row = await conn.fetchrow("SELECT * FROM meetings WHERE id = $1", meeting_id)
+        db_pool = await get_db_connection()
+        async with db_pool.acquire() as conn:
+            if user_id is not None:
+                # Check if meeting belongs to user
+                row = await conn.fetchrow(
+                    "SELECT * FROM meetings WHERE id = $1 AND user_id = $2", 
+                    meeting_id, user_id
+                )
+            else:
+                # Backward compatibility for non-authenticated access
+                row = await conn.fetchrow("SELECT * FROM meetings WHERE id = $1", meeting_id)
             if row:
                 meeting = dict(row)
                 
@@ -245,13 +325,13 @@ async def get_meeting_by_id(meeting_id: int) -> Optional[Dict]:
         raise
 
 async def delete_meeting_by_id(meeting_id: int) -> bool:
-    await init_db_pool()
-    async with pool.acquire() as conn:
+    db_pool = await get_db_connection()
+    async with db_pool.acquire() as conn:
         result = await conn.execute("DELETE FROM meetings WHERE id = $1", meeting_id)
         return result.split()[-1] == "1"
 
-async def get_action_items(completed: Optional[bool] = None, limit: int = 100) -> List[Dict]:
-    await init_db_pool()
+async def get_action_items(completed: Optional[bool] = None, limit: int = 100, user_id: Optional[int] = None) -> List[Dict]:
+    db_pool = await get_db_connection()
     query = """
         SELECT ai.*, m.title as meeting_title 
         FROM action_items ai 
@@ -259,16 +339,26 @@ async def get_action_items(completed: Optional[bool] = None, limit: int = 100) -
     """
     values = []
     param_count = 1
+    conditions = []
+    
+    # Add user filter if provided
+    if user_id is not None:
+        conditions.append(f"m.user_id = ${param_count}")
+        values.append(user_id)
+        param_count += 1
     
     if completed is not None:
-        query += f" WHERE ai.completed = ${param_count}"
+        conditions.append(f"ai.completed = ${param_count}")
         values.append(completed)
         param_count += 1
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
 
     query += f" ORDER BY ai.created_at DESC LIMIT ${param_count}"
     values.append(limit)
 
-    async with pool.acquire() as conn:
+    async with db_pool.acquire() as conn:
         rows = await conn.fetch(query, *values)
 
     return [dict(row) for row in rows]
@@ -291,7 +381,8 @@ async def update_action_item_status(item_id: int, updates: Dict) -> bool:
     query = f"UPDATE action_items SET {', '.join(set_clauses)} WHERE id = ${param_count}"
     values.append(item_id)
 
-    async with pool.acquire() as conn:
+    db_pool = await get_db_connection()
+    async with db_pool.acquire() as conn:
         result = await conn.execute(query, *values)
         return result.split()[-1] == "1"
 
@@ -303,23 +394,37 @@ async def close_db_pool():
         pool = None
         print("✅ Database connection pool closed")
 
-async def get_recent_clients(limit: int = 10) -> List[Dict]:
+async def get_recent_clients(limit: int = 10, user_id: Optional[int] = None) -> List[Dict]:
     """Get recent unique clients with their last meeting info"""
     try:
-        await init_db_pool()
-        async with pool.acquire() as conn:
+        db_pool = await get_db_connection()
+        async with db_pool.acquire() as conn:
             # Get unique clients with their most recent meeting
-            rows = await conn.fetch("""
-                SELECT DISTINCT ON (client) 
-                    client,
-                    title as last_meeting_title,
-                    created_at as last_meeting_date,
-                    COUNT(*) OVER (PARTITION BY client) as meeting_count
-                FROM meetings 
-                WHERE client IS NOT NULL AND client != ''
-                ORDER BY client, created_at DESC
-                LIMIT $1
-            """, limit)
+            if user_id is not None:
+                rows = await conn.fetch("""
+                    SELECT DISTINCT ON (client) 
+                        client,
+                        title as last_meeting_title,
+                        created_at as last_meeting_date,
+                        COUNT(*) OVER (PARTITION BY client) as meeting_count
+                    FROM meetings 
+                    WHERE client IS NOT NULL AND client != '' AND user_id = $1
+                    ORDER BY client, created_at DESC
+                    LIMIT $2
+                """, user_id, limit)
+            else:
+                # Backward compatibility for non-authenticated access
+                rows = await conn.fetch("""
+                    SELECT DISTINCT ON (client) 
+                        client,
+                        title as last_meeting_title,
+                        created_at as last_meeting_date,
+                        COUNT(*) OVER (PARTITION BY client) as meeting_count
+                    FROM meetings 
+                    WHERE client IS NOT NULL AND client != ''
+                    ORDER BY client, created_at DESC
+                    LIMIT $1
+                """, limit)
             
             clients = []
             for row in rows:
