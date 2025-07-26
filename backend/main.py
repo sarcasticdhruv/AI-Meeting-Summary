@@ -1,11 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import uvicorn
 import os
 from datetime import datetime
 from contextlib import asynccontextmanager
 import logging
 import sys
+from pathlib import Path
 
 from routes import upload, meetings, actions, export, email, auth
 from db.database import init_database, close_db_pool
@@ -64,8 +67,7 @@ app.add_middleware(
         "http://localhost:8000",  # Local backend
         "http://localhost:4173",  # Local Vite preview
         "http://localhost:5173",  # Local Vite dev server (alternative port)
-        "https://meetsnap.onrender.com",  # Your actual frontend URL
-        "https://ai-meeting-backend-api.onrender.com",  # Your actual backend URL
+        "https://meeting-insights-fullstack.onrender.com",  # Your actual deployment URL
         "https://*.onrender.com"  # Allow all Render domains
     ],
     allow_credentials=True,
@@ -84,10 +86,45 @@ app.include_router(actions.router, prefix="/action-items", tags=["actions"])
 app.include_router(export.router, prefix="/export", tags=["export"])
 app.include_router(email.router, prefix="/email", tags=["email"])
 
+# Mount static files for the React frontend
+static_dir = Path(__file__).parent.parent / "frontend" / "dist"
+if static_dir.exists():
+    print(f"📁 Mounting static files from: {static_dir}", flush=True)
+    app.mount("/static", StaticFiles(directory=static_dir / "static"), name="static")
+    app.mount("/assets", StaticFiles(directory=static_dir / "assets"), name="assets")
+else:
+    print(f"⚠️  Static directory not found: {static_dir}", flush=True)
+
 @app.get("/")
 @app.head("/")
 async def root():
+    # Serve React app for root requests
+    static_dir = Path(__file__).parent.parent / "frontend" / "dist"
+    index_file = static_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
     return {"message": "AI Meeting Summary API is running"}
+
+# Catch-all route to serve React app for client-side routing
+@app.get("/{path:path}")
+async def serve_react_app(path: str):
+    # Don't serve React app for API routes
+    if path.startswith(("auth", "upload", "meetings", "action-items", "export", "email", "health", "debug")):
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    static_dir = Path(__file__).parent.parent / "frontend" / "dist"
+    file_path = static_dir / path
+    
+    # If it's a specific file and exists, serve it
+    if file_path.is_file():
+        return FileResponse(file_path)
+    
+    # Otherwise, serve the React app's index.html for client-side routing
+    index_file = static_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    
+    raise HTTPException(status_code=404, detail="Not found")
 
 @app.get("/health")
 @app.head("/health")

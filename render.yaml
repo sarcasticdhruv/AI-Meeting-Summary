@@ -11,15 +11,13 @@ services:
       echo "✅ Build process delegated to Dockerfile"
     # The Dockerfile handles everything, so no additional start command needed
     envVars:
-      - key: PORT
-        value: 10000
       - key: GEMINI_API_KEY
         sync: false  # Set this manually in Render dashboard
       - key: POSTGRES_URL
         sync: false  # Set this manually in Render dashboard
       - key: VITE_API_URL
         value: https://meeting-insights-fullstack.onrender.com
-    # Health check will hit the FastAPI backend through nginx proxy
+    # Health check will hit the FastAPI backend directly
     healthCheckPath: /health
     disk:
       name: fullstack-storage
