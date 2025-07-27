@@ -8,7 +8,7 @@ from db.database import get_action_items, update_action_item_status
 
 router = APIRouter()
 
-@router.get("/", response_model=List[ActionItemResponse])
+@router.get("", response_model=List[ActionItemResponse])
 async def get_all_action_items(current_user: UserResponse = Depends(get_current_user)):
     """Get all action items"""
     try:
