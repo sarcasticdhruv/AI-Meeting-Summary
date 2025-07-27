@@ -78,18 +78,29 @@ app.add_middleware(
 # Initialize database
 # init_database()  # Remove this line since we're using lifespan now
 
-# Include routers
-app.include_router(auth.router, prefix="/auth", tags=["authentication"])
-app.include_router(upload.router, prefix="/upload", tags=["upload"])
-app.include_router(meetings.router, prefix="/meetings", tags=["meetings"])
-app.include_router(actions.router, prefix="/action-items", tags=["actions"])
-app.include_router(export.router, prefix="/export", tags=["export"])
-app.include_router(email.router, prefix="/email", tags=["email"])
+# Include routers with /api prefix
+app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
+app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
+app.include_router(meetings.router, prefix="/api/meetings", tags=["meetings"])
+app.include_router(actions.router, prefix="/api/action-items", tags=["actions"])
+app.include_router(export.router, prefix="/api/export", tags=["export"])
+app.include_router(email.router, prefix="/api/email", tags=["email"])
 
 # Health check endpoint for deployment platforms
+@app.get("/api/health")
+@app.head("/api/health")
+async def health_check():
+    """Health check endpoint for deployment platforms like Render"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "AI Meeting Summary API"
+    }
+
+# Also provide health check at root level for convenience
 @app.get("/health")
 @app.head("/health")
-async def health_check():
+async def health_check_root():
     """Health check endpoint for deployment platforms like Render"""
     return {
         "status": "healthy",
@@ -132,7 +143,7 @@ async def root():
 @app.get("/{path:path}")
 async def serve_react_app(path: str):
     # Don't serve React app for API routes
-    api_prefixes = ["auth", "upload", "meetings", "action-items", "export", "email", "health", "debug"]
+    api_prefixes = ["api/auth", "api/upload", "api/meetings", "api/action-items", "api/export", "api/email", "api/health", "health", "debug"]
     
     if any(path.startswith(prefix) for prefix in api_prefixes):
         raise HTTPException(status_code=404, detail="Not found")
