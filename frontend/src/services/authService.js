@@ -7,13 +7,13 @@ const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_URL;
   }
   
-  // In production, use relative path with /api prefix (same domain)
+  // In production, use relative path (same domain)
   if (import.meta.env.MODE === 'production') {
-    return "/api";  // Use /api prefix for production
+    return "";  // Use relative URLs for production
   }
   
-  // In development, use localhost with /api prefix
-  return "http://localhost:8000/api";
+  // In development, use localhost
+  return "http://localhost:8000";
 };
 
 const API_BASE_URL = getApiBaseUrl();

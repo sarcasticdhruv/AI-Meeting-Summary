@@ -4,10 +4,12 @@ import { Calendar, Users, Clock, ArrowLeft, Download, Mail, ChevronDown } from "
 import { formatDate } from "../utils/dateUtils"
 import { fetchMeetingById, exportMeeting, sendEmailSummary } from "../services/api"
 import { useState, useEffect, useRef } from "react"
+import { useAuth } from "../contexts/AuthContext"
 
 const MeetingDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [isExporting, setIsExporting] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [isEmailing, setIsEmailing] = useState(false)
@@ -47,25 +49,17 @@ const MeetingDetails = () => {
   }
 
   const handleEmail = async () => {
-    const email = prompt("Enter email address to send meeting summary:")
-    
-    if (!email) {
-      return // User cancelled
-    }
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      alert("Please enter a valid email address.")
+    if (!user?.email) {
+      alert("User email not found. Please ensure you are logged in.")
       return
     }
 
-    const includeTranscript = confirm("Include full transcript in the email?")
+    const includeTranscript = confirm(`Send meeting summary to ${user.email}?\n\nClick OK to include full transcript, or Cancel to send summary only.`)
     
     try {
       setIsEmailing(true)
-      await sendEmailSummary(id, email, includeTranscript)
-      alert("Email sent successfully!")
+      await sendEmailSummary(id, user.email, includeTranscript)
+      alert(`Email sent successfully to ${user.email}!`)
     } catch (error) {
       console.error("Email failed:", error)
       alert("Failed to send email. Please try again.")

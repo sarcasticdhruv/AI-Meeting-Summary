@@ -1,22 +1,20 @@
 import axios from "axios";
 
-// Use production backend URL when deployed, localhost for development
+// Use production backend URL when deployed, localhost for development  
 const getApiBaseUrl = () => {
   // If VITE_API_URL is explicitly set, use it
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
   
-  // In production, use relative path with /api prefix (same domain)
+  // In production, use relative path (same domain)
   if (import.meta.env.MODE === 'production') {
-    return "/api";  // Use /api prefix for production
+    return "";  // Use relative URLs for production
   }
   
-  // In development, use localhost with /api prefix
-  return "http://localhost:8000/api";
-};
-
-const API_BASE_URL = getApiBaseUrl();
+  // In development, use localhost
+  return "http://localhost:8000";
+};const API_BASE_URL = getApiBaseUrl();
 
 console.log('🔗 API Base URL:', API_BASE_URL);
 console.log('🌍 Environment Mode:', import.meta.env.MODE);
